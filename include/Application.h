@@ -6,7 +6,9 @@
 
 #include <memory>
 #include <utility>
-
+#include <Scene.h>
+#include <ResourceRegistry.h>
+#include <ThreadPool.h>
 
 ////////////////////////////////////////////////////////////
 /// \brief  A singleton class which defines the application
@@ -14,38 +16,10 @@
 ////////////////////////////////////////////////////////////
 class Application {
 public:
-    ////////////////////////////////////////////////////////////
-    /// \brief  Deleted copy constructor
-    ///
-    ////////////////////////////////////////////////////////////
     Application(const Application&) = delete;
-
-    ////////////////////////////////////////////////////////////
-    /// \brief  Deleted move constructor
-    ///
-    ////////////////////////////////////////////////////////////
     Application(Application&&) = delete;
-
-    ////////////////////////////////////////////////////////////
-    /// \brief  Deleted copy assignment operator
-    ///
-    ////////////////////////////////////////////////////////////
     Application& operator=(const Application&) = delete;
-
-    ////////////////////////////////////////////////////////////
-    /// \brief  Deleted move assignment operator
-    ///
-    ////////////////////////////////////////////////////////////
     Application& operator=(Application&&) = delete;
-
-    ////////////////////////////////////////////////////////////
-    /// \brief  Destructor
-    ///
-    /// Closes the application window
-    ///
-    ////////////////////////////////////////////////////////////
-    ~Application();
-
 
     ////////////////////////////////////////////////////////////
     /// \brief  Returns the instance of the application
@@ -67,46 +41,58 @@ public:
     }
 
     ////////////////////////////////////////////////////////////
-    /// \brief  Starts the mainloop and run it, until the user closes
+    /// \brief  Starts the main loop and run it, until the user closes
     ///         the application or an error occurs
     ///
     ////////////////////////////////////////////////////////////
     void RunMainLoop();
 
     ////////////////////////////////////////////////////////////
-    /// \brief  An exception class used by the Application
+    /// \brief  Returns the texture registry
+    ///
+    ///
+    /// The texture registry is used to load and store textures.
+    ///
+    /// \return A reference to the texture registry
+    ///
+    /// \see TextureRegistry
     ///
     ////////////////////////////////////////////////////////////
-    class Exception : public std::exception
-    {
-    public:
-        ////////////////////////////////////////////////////////////
-        /// \brief  Constructor
-        ///
-        /// \param message A description of the exception
-        ///
-        ////////////////////////////////////////////////////////////
-        explicit inline Exception(const std::string& message)
-            : m_message(std::string("[APPLICATION EXCEPTION] " + message))
-        {}
+    [[nodiscard]] inline TextureRegistry& GetTextureRegistry() { return m_textureRegistry; }
 
-        ////////////////////////////////////////////////////////////
-        /// \brief  Returns the description of the exception
-        ///
-        /// \return The string containing the message
-        ///
-        ///////////////////////////////////////////////////////////////
-        [[nodiscard]] inline const char* what() const noexcept override
-        {
-            return m_message.c_str();
-        }
+    ////////////////////////////////////////////////////////////
+    /// \brief  Returns the the thread pool
+    ///
+    /// The thread pool is used to execute tasks asynchronously.
+    ///
+    /// \return A reference to the thread pool
+    ///
+    /// \see ThreadPool
+    ///
+    ////////////////////////////////////////////////////////////
+    [[nodiscard]] inline ThreadPool& GetThreadPool() { return m_threadPool; }
 
-    private:
-        ////////////////////////////////////////////////////////////
-        // Member data
-        ////////////////////////////////////////////////////////////
-        std::string m_message;
-    };
+    static constexpr const char* WINDOW_TITLE = "Stardew";
+    static constexpr uint32_t WINDOW_WIDTH = 800;
+    static constexpr uint32_t WINDOW_HEIGHT = 600;
+
+protected:
+    friend ThreadPool;
+
+    ////////////////////////////////////////////////////////////
+    /// \brief  Returns the context id
+    ///
+    /// The context id is used to identify the OpenGL context.
+    /// This function is only used internally.
+    ///
+    /// \return The context id
+    ///
+    ////////////////////////////////////////////////////////////
+#ifdef _WIN32
+    [[nodiscard]] HGLRC GetContextId() { return m_contextId; }
+#else
+#error Not Supported!
+#endif
 
 private:
     ////////////////////////////////////////////////////////////
@@ -136,13 +122,6 @@ private:
     ////////////////////////////////////////////////////////////
     void Render();
 
-    ////////////////////////////////////////////////////////////
-    // Constants
-    ////////////////////////////////////////////////////////////
-    static constexpr const char* WINDOW_TITLE = "Stardew";
-    static constexpr uint32_t WINDOW_WIDTH = 800;
-    static constexpr uint32_t WINDOW_HEIGHT = 600;
-
     static constexpr float CIRCLE_RADIUS = 100.0f;
     static constexpr float CIRCLE_ANGULAR_SPEED = 180.0f * M_PI / 180.0f;
     static constexpr float CIRCLE_DISTANCE_FROM_CENTER = 200.0f;
@@ -150,27 +129,24 @@ private:
 
     static constexpr float CURSOR_CIRCLE_RADIUS = 10.0f;
 
-    ////////////////////////////////////////////////////////////
-    // Static data
-    ////////////////////////////////////////////////////////////
     static std::unique_ptr<Application> s_instance;
 
-    ////////////////////////////////////////////////////////////
-    // Member data
-    ////////////////////////////////////////////////////////////
     bool m_running = true;
     sf::RenderWindow m_window;
 
-    float m_circleAngularDisplacement = 0.0f;
-    sf::Vector2<float> m_circleRotationCenter = { 0.0f, 0.0f };
-    sf::CircleShape m_circleShape = sf::CircleShape(CIRCLE_RADIUS);
-    sf::Color m_circleTargetColor = sf::Color::White;
-    sf::Vector3<double> m_circleCurrentColor = { 0.0f, 0.0f, 0.0f };
-    float m_circleColorChangeTime = 0.0f;
-
-    sf::CircleShape m_cursorCircleShape = sf::CircleShape(CURSOR_CIRCLE_RADIUS);
+    TextureRegistry m_textureRegistry;
 
     sf::Clock m_clock;
     float m_timer = 0.0f;
     uint16_t frames = 0;
+
+    std::unique_ptr<Scene> m_currentScene;
+
+    ThreadPool m_threadPool;
+
+#ifdef _WIN32
+    HGLRC m_contextId;
+#else
+#error Not Supported!
+#endif
 };
