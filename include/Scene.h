@@ -34,8 +34,31 @@ public:
 #endif
     virtual ~Scene() = default;
 
+    ////////////////////////////////////////////////////////////
+    /// \brief  Initializes the scene
+    ///
+    /// This function is called when the scene is loaded.
+    ///
+    ////////////////////////////////////////////////////////////
     virtual void Init() = 0;
-    virtual void Update() = 0;
+
+    ////////////////////////////////////////////////////////////
+    /// \brief  Updates the scene
+    ///
+    /// This function is called every frame.
+    ///
+    /// \param deltaTime the time since the last frame
+    ///
+    ////////////////////////////////////////////////////////////
+    virtual void Update(float deltaTime) = 0;
+
+    ////////////////////////////////////////////////////////////
+    /// \brief  Renders the scene
+    ///
+    /// This function is called every frame, after Update.
+    ///
+    /// \param window the window to render to
+    ////////////////////////////////////////////////////////////
     virtual void Render(sf::RenderWindow& window) = 0;
 
 protected:

@@ -131,7 +131,7 @@ public:
         /// \throw std::runtime_error if the handle is empty on debug builds
         ///
         //////////////////////////////////////////////////////////////
-        operator const T&() // NOLINT
+        operator const T&() const // NOLINT
         {
 #ifdef DEBUG
             if(m_element == nullptr)
@@ -139,6 +139,16 @@ public:
 #endif
             return std::get<1>(*m_element);
         }
+
+         const T* operator->() const
+         {
+            return &(const T&)(*this);
+         }
+
+         const T* GetPointer() const
+         {
+            return &(const T&)(*this);
+         }
 
         //////////////////////////////////////////////////////////////
         /// \brief  The destructor.

@@ -10,9 +10,10 @@
 ////////////////////////////////////////////////////////////
 class GameObject
 {
+public:
     virtual ~GameObject() = default;
 
     virtual void Init() = 0;
-    virtual void Update() = 0;
-    virtual void Render() = 0;
+    virtual void Update(float deltaTime) = 0;
+    virtual void Render(sf::RenderWindow& window) = 0;
 };
