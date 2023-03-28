@@ -11,7 +11,13 @@ add_executable(Stardew
         src/Application.cpp
         src/RandomNumberGenerator.cpp
         src/MainMenuScene.cpp
-        src/ThreadPool.cpp)
+        src/ThreadPool.cpp
+        src/GameGrid.cpp
+        src/tiles/GroundTile.cpp
+        src/tiles/PassagePointTile.cpp
+        src/tiles/WallTile.cpp
+        src/tiles/PathTile.cpp
+        src/tiles/SoilTile.cpp)
 target_include_directories(Stardew PRIVATE include)
 target_precompile_headers(Stardew PRIVATE include/Precompiled.h)
 target_link_libraries(Stardew PRIVATE sfml-graphics)

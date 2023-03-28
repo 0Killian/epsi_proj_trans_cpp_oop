@@ -14,7 +14,8 @@
 /// \brief  A singleton class which defines the application
 ///
 ////////////////////////////////////////////////////////////
-class Application {
+class Application
+{
 public:
     Application(const Application&) = delete;
     Application(Application&&) = delete;
@@ -121,13 +122,6 @@ private:
     ///
     ////////////////////////////////////////////////////////////
     void Render();
-
-    static constexpr float CIRCLE_RADIUS = 100.0f;
-    static constexpr float CIRCLE_ANGULAR_SPEED = 180.0f * M_PI / 180.0f;
-    static constexpr float CIRCLE_DISTANCE_FROM_CENTER = 200.0f;
-    static constexpr float CIRCLE_COLOR_CHANGE_TIME = 2.0f;
-
-    static constexpr float CURSOR_CIRCLE_RADIUS = 10.0f;
 
     static std::unique_ptr<Application> s_instance;
 

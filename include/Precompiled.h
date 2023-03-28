@@ -13,3 +13,8 @@
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
 #include <cmath>
+
+#ifdef WIN32
+#define WIN32_LEAN_AND_MIN
+#include <windows.h>
+#endif

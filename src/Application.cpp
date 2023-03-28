@@ -14,7 +14,7 @@ Application::Application()
 
     // Create and configure the window
     sf::ContextSettings settings;
-    settings.antialiasingLevel = 16;
+    settings.antialiasingLevel = 4;
 
     m_window.create(sf::VideoMode(sf::Vector2u(WINDOW_WIDTH, WINDOW_HEIGHT)), WINDOW_TITLE, sf::Style::Default, settings);
     m_window.setVerticalSyncEnabled(true);
@@ -62,6 +62,10 @@ void Application::RunMainLoop()
         SPDLOG_ERROR("Exception caught: {}", e.what());
     }
 
+    // Destroy the current scene before terminating the thread pool to let it
+    // finish its tasks
+    m_currentScene.reset();
+
     // Terminate the thread pool
     m_threadPool.Terminate();
 }
@@ -87,7 +91,7 @@ void Application::Update(float deltaTime)
     }
 
     // Update the current scene
-    m_currentScene->Update();
+    m_currentScene->Update(deltaTime);
 }
 
 void Application::Render()
