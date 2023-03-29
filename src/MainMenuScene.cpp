@@ -77,45 +77,45 @@ void MainMenuScene::HandleEvent(const sf::Event &event)
 {
     if (event.type == sf::Event::KeyPressed)
     {
-        if (event.key.code == sf::Keyboard::Q)
+        if (event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Left)
         {
             m_cameraMovement.x -= 2;
         }
-        else if (event.key.code == sf::Keyboard::D)
+        else if (event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
         {
             m_cameraMovement.x += 2;
         }
-        else if (event.key.code == sf::Keyboard::Z)
+        else if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
         {
             m_cameraMovement.y -= 2;
         }
-        else if (event.key.code == sf::Keyboard::S)
+        else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
         {
             m_cameraMovement.y += 2;
         }
     }
     else if (event.type == sf::Event::KeyReleased)
     {
-        if (event.key.code == sf::Keyboard::Q)
+        if (event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Left)
         {
             m_cameraMovement.x += 2;
         }
-        else if(event.key.code == sf::Keyboard::D)
+        else if(event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
         {
             m_cameraMovement.x -= 2;
         }
-        else if (event.key.code == sf::Keyboard::Z)
+        else if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
         {
             m_cameraMovement.y += 2;
         }
-        else if (event.key.code == sf::Keyboard::S)
+        else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
         {
             m_cameraMovement.y -= 2;
         }
     }
     else if (event.type == sf::Event::MouseWheelScrolled)
     {
-        m_zoomDelta = event.mouseWheelScroll.delta;
+        m_zoomDelta = event.mouseWheelScroll.delta * 20;
     }
 }
 
