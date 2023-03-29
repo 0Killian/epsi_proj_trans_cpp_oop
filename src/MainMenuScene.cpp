@@ -5,10 +5,14 @@
 #include <Application.h>
 #include <GameGrid.h>
 
-MainMenuScene::MainMenuScene() : Scene("MainMenuScene") {
+MainMenuScene::MainMenuScene() : Scene("MainMenuScene")
+{
+    m_cameraMovement.x = 0;
+    m_cameraMovement.y = 0;
 }
 
-void MainMenuScene::Init() {
+void MainMenuScene::Init()
+{
     m_loadingScreenTexture = Application::GetInstance().GetTextureRegistry().GetResource("chargement.png");
     m_loadingScreenSprite.setTexture(m_loadingScreenTexture);
 
@@ -25,8 +29,10 @@ void MainMenuScene::Init() {
     m_loadingScreenSprite.setPosition({windowSize.x / 2.0f, windowSize.y / 2.0f});
     m_loadingScreenSprite.setTextureRect(sf::IntRect({0, 0}, {1920, 1080}));
 
-    Application::GetInstance().GetThreadPool().Enqueue([this]() {
-        try {
+    Application::GetInstance().GetThreadPool().Enqueue([this]()
+    {
+        try
+        {
             SPDLOG_INFO("Initializing MainMenuScene...");
 
             m_mainMenuTexture = Application::GetInstance().GetTextureRegistry().GetResource("main_menu.png");
@@ -49,7 +55,8 @@ void MainMenuScene::Init() {
 
             m_testGameGrid = GameGrid::ReadFromFile("assets/tilemaps/tilemap.htf");
 
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 100; i++)
+            {
                 SPDLOG_INFO("Initializing GameObject {}...", i);
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 int index = static_cast<int>(7.0f / (100.0f / static_cast<float>(i + 1)));
@@ -64,47 +71,72 @@ void MainMenuScene::Init() {
             m_exceptions.push(std::current_exception());
         }
     });
-
 }
 
-void MainMenuScene::Update(float deltaTime) {
-    if (!m_loaded && !m_exceptions.empty()) {
+void MainMenuScene::HandleEvent(const sf::Event &event)
+{
+    if (event.type == sf::Event::KeyPressed)
+    {
+        if (event.key.code == sf::Keyboard::Q)
+        {
+            m_cameraMovement.x -= 2;
+        }
+        else if (event.key.code == sf::Keyboard::D)
+        {
+            m_cameraMovement.x += 2;
+        }
+        else if (event.key.code == sf::Keyboard::Z)
+        {
+            m_cameraMovement.y -= 2;
+        }
+        else if (event.key.code == sf::Keyboard::S)
+        {
+            m_cameraMovement.y += 2;
+        }
+    }
+    else if (event.type == sf::Event::KeyReleased)
+    {
+        if (event.key.code == sf::Keyboard::Q)
+        {
+            m_cameraMovement.x += 2;
+        }
+        else if(event.key.code == sf::Keyboard::D)
+        {
+            m_cameraMovement.x -= 2;
+        }
+        else if (event.key.code == sf::Keyboard::Z)
+        {
+            m_cameraMovement.y += 2;
+        }
+        else if (event.key.code == sf::Keyboard::S)
+        {
+            m_cameraMovement.y -= 2;
+        }
+    }
+    else if (event.type == sf::Event::MouseWheelScrolled)
+    {
+        m_zoomDelta = event.mouseWheelScroll.delta;
+    }
+}
+
+void MainMenuScene::Update(float deltaTime)
+{
+    if (!m_loaded && !m_exceptions.empty())
+    {
         std::rethrow_exception(m_exceptions.front());
     }
 
-    if (m_loaded) {
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
-        {
-            m_pos.x -= 2 * deltaTime;
-            m_testGameGrid->SetCameraPosition(m_pos);
-        }
-        else if(sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-        {
-            m_pos.x += 2 * deltaTime;
-            m_testGameGrid->SetCameraPosition(m_pos);
-        }
+    if (m_loaded)
+    {
+        sf::Vector2f cameraMovement = {m_cameraMovement.x * deltaTime, m_cameraMovement.y * deltaTime};
 
-        if(sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
-        {
-            m_pos.y -= 2 * deltaTime;
-            m_testGameGrid->SetCameraPosition(m_pos);
-        }
-        else if(sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-        {
-            m_pos.y += 2 * deltaTime;
-            m_testGameGrid->SetCameraPosition(m_pos);
-        }
+        m_pos += cameraMovement;
+        m_zoom += m_zoomDelta * deltaTime;
 
-        if(sf::Mouse::isButtonPressed(sf::Mouse::Left))
-        {
-            m_zoom += 0.1f * deltaTime;
-            m_testGameGrid->SetCameraZoom(m_zoom);
-        }
-        else if(sf::Mouse::isButtonPressed(sf::Mouse::Right))
-        {
-            m_zoom -= 0.1f * deltaTime;
-            m_testGameGrid->SetCameraZoom(m_zoom);
-        }
+        m_testGameGrid->SetCameraPosition(m_pos);
+        m_testGameGrid->SetCameraZoom(m_zoom);
+
+        m_zoomDelta = 0;
 
         m_testGameGrid->Update(deltaTime);
     }
@@ -114,7 +146,6 @@ void MainMenuScene::Render(sf::RenderWindow &window) {
     if (!m_loaded) {
         // Loading Screen
         window.draw(m_loadingScreenSprite);
-        window.draw(m_loadingCircle);
     } else {
         // Main Menu
         //window.draw(m_mainMenuSprite);

@@ -18,6 +18,7 @@ Application::Application()
 
     m_window.create(sf::VideoMode(sf::Vector2u(WINDOW_WIDTH, WINDOW_HEIGHT)), WINDOW_TITLE, sf::Style::Default, settings);
     m_window.setVerticalSyncEnabled(true);
+    m_window.setKeyRepeatEnabled(false);
 
     m_contextId = wglGetCurrentContext();
 }
@@ -82,6 +83,8 @@ void Application::Update(float deltaTime)
             m_running = false;
             return;
         }
+
+        m_currentScene->HandleEvent(event);
     }
 
     // In case the window was closed without an event notifying it
