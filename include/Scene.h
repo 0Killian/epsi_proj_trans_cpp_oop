@@ -61,6 +61,17 @@ public:
     ////////////////////////////////////////////////////////////
     virtual void Render(sf::RenderWindow& window) = 0;
 
+    ////////////////////////////////////////////////////////////
+    /// \brief  Handles events from the window
+    ///
+    /// This function is called when an event is received from
+    /// the window.
+    ///
+    /// \param event the event to handle
+    ///
+    ////////////////////////////////////////////////////////////
+    virtual void HandleEvent(const sf::Event& event) = 0;
+
 protected:
     std::vector<std::shared_ptr<GameObject>> m_gameObjects;
 #ifdef DEBUG

@@ -20,10 +20,10 @@ public:
     void Init() override;
     void Update(float deltaTime) override;
     void Render(sf::RenderWindow& window) override;
+    void HandleEvent(const sf::Event& event) override;
 
 private:
     std::atomic_bool m_loaded = false;
-    sf::CircleShape m_loadingCircle;
 
     TextureRegistry::ResourceHandle m_loadingScreenTexture;
     sf::Sprite m_loadingScreenSprite;
@@ -33,8 +33,10 @@ private:
 
     std::unique_ptr<GameGrid> m_testGameGrid;
 
-    std::queue<std::exception_ptr> m_exceptions;
-
-    sf::Vector2f m_pos = {0, 0};
+    sf::Vector2f m_cameraMovement;
+    sf::Vector2f m_pos;
+    float m_zoomDelta = 0.0f;
     float m_zoom = 1.0f;
+
+    std::queue<std::exception_ptr> m_exceptions;
 };

@@ -17,6 +17,8 @@
 class Application
 {
 public:
+    typedef std::function<void(sf::Event&, void*)> EventListener;
+
     Application(const Application&) = delete;
     Application(Application&&) = delete;
     Application& operator=(const Application&) = delete;
