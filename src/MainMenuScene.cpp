@@ -115,7 +115,7 @@ void MainMenuScene::HandleEvent(const sf::Event &event)
     }
     else if (event.type == sf::Event::MouseWheelScrolled)
     {
-        m_zoomDelta = event.mouseWheelScroll.delta;
+        m_zoomDelta = event.mouseWheelScroll.delta * 20;
     }
 }
 
@@ -131,7 +131,7 @@ void MainMenuScene::Update(float deltaTime)
         sf::Vector2f cameraMovement = {m_cameraMovement.x * deltaTime, m_cameraMovement.y * deltaTime};
 
         m_pos += cameraMovement;
-        m_zoom += m_zoomDelta * deltaTime*20;
+        m_zoom += m_zoomDelta * deltaTime;
 
         m_testGameGrid->SetCameraPosition(m_pos);
         m_testGameGrid->SetCameraZoom(m_zoom);
