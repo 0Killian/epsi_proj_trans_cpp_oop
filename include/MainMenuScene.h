@@ -8,6 +8,7 @@
 #include <queue>
 #include "ResourceRegistry.h"
 #include "GameGrid.h"
+#include "Player.h"
 
 // A temporary scene
 
@@ -37,6 +38,8 @@ private:
     sf::Vector2f m_pos;
     float m_zoomDelta = 0.0f;
     float m_zoom = 1.0f;
+
+    Player m_player;
 
     std::queue<std::exception_ptr> m_exceptions;
 };

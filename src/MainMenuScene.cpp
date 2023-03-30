@@ -29,6 +29,7 @@ void MainMenuScene::Init()
     m_loadingScreenSprite.setPosition({windowSize.x / 2.0f, windowSize.y / 2.0f});
     m_loadingScreenSprite.setTextureRect(sf::IntRect({0, 0}, {1920, 1080}));
 
+
     Application::GetInstance().GetThreadPool().Enqueue([this]()
     {
         try
@@ -55,6 +56,9 @@ void MainMenuScene::Init()
 
             m_testGameGrid = GameGrid::ReadFromFile("assets/tilemaps/tilemap.htf");
 
+            m_player.Init();
+
+
             for (int i = 0; i < 100; i++)
             {
                 SPDLOG_INFO("Initializing GameObject {}...", i);
@@ -71,6 +75,9 @@ void MainMenuScene::Init()
             m_exceptions.push(std::current_exception());
         }
     });
+
+
+
 }
 
 void MainMenuScene::HandleEvent(const sf::Event &event)
@@ -117,6 +124,13 @@ void MainMenuScene::HandleEvent(const sf::Event &event)
     {
         m_zoomDelta = event.mouseWheelScroll.delta * 20;
     }
+    else if (event.type == sf::Event::MouseButtonPressed)
+    {
+        if (event.mouseButton.button == sf::Mouse::Left)
+        {
+
+        }
+    }
 }
 
 void MainMenuScene::Update(float deltaTime)
@@ -134,13 +148,17 @@ void MainMenuScene::Update(float deltaTime)
         m_zoom += m_zoomDelta * deltaTime;
 
         m_testGameGrid->SetCameraPosition(m_pos);
-        m_testGameGrid->SetCameraZoom(m_zoom);
+        m_testGameGrid->SetZoomFactor(m_zoom);
 
         m_zoomDelta = 0;
 
         m_testGameGrid->Update(deltaTime);
+        m_player.SetZoomFactor(m_zoom);
+        m_player.Update(deltaTime);
     }
+
 }
+
 
 void MainMenuScene::Render(sf::RenderWindow &window) {
     if (!m_loaded) {
@@ -150,7 +168,12 @@ void MainMenuScene::Render(sf::RenderWindow &window) {
         // Main Menu
         //window.draw(m_mainMenuSprite);
         m_testGameGrid->Render(window);
+        m_player.Render(window);
     }
 }
 
+
+
 MainMenuScene::~MainMenuScene() = default;
+
+

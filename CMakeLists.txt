@@ -17,7 +17,7 @@ add_executable(Stardew
         src/tiles/PassagePointTile.cpp
         src/tiles/WallTile.cpp
         src/tiles/PathTile.cpp
-        src/tiles/SoilTile.cpp)
+        src/tiles/SoilTile.cpp src/Player.cpp)
 target_include_directories(Stardew PRIVATE include)
 target_precompile_headers(Stardew PRIVATE include/Precompiled.h)
 target_link_libraries(Stardew PRIVATE sfml-graphics)
