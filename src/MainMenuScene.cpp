@@ -151,6 +151,16 @@ void MainMenuScene::Update(float deltaTime)
         m_zoom += m_zoomDelta * deltaTime;
         m_zoomDelta = 0;
 
+        if(m_zoom < 0.5f)
+        {
+            m_zoom = 0.5f;
+        }
+
+        if(m_zoom > 2.0f)
+        {
+            m_zoom = 2.0f;
+        }
+
         m_player->SetZoomFactor(m_zoom);
         m_player->SetPosition(m_pos);
 
@@ -179,8 +189,6 @@ void MainMenuScene::Render(sf::RenderWindow &window) {
         }
     }
 }
-
-
 
 MainMenuScene::~MainMenuScene() = default;
 

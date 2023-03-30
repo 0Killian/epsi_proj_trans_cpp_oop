@@ -17,7 +17,9 @@ add_executable(Stardew
         src/tiles/PassagePointTile.cpp
         src/tiles/WallTile.cpp
         src/tiles/PathTile.cpp
-        src/tiles/SoilTile.cpp src/Player.cpp)
+        src/tiles/SoilTile.cpp
+        src/Player.cpp)
+
 target_include_directories(Stardew PRIVATE include)
 target_precompile_headers(Stardew PRIVATE include/Precompiled.h)
 target_link_libraries(Stardew PRIVATE sfml-graphics)
@@ -35,3 +37,6 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 endif()
 
 install(TARGETS Stardew)
+
+add_executable(GenerateTilemap scripts/GenerateTilemap.cpp)
+target_compile_features(GenerateTilemap PRIVATE cxx_std_23)
