@@ -26,7 +26,7 @@ std::unique_ptr<GameGrid::Tile> GameGrid::Tile::ParseRawTile(RawGameTile* rawTil
     }
 }
 
-std::unique_ptr<GameGrid> GameGrid::ReadFromFile(const std::string &path)
+std::shared_ptr<GameGrid> GameGrid::ReadFromFile(const std::string &path)
 {
     std::vector<std::unique_ptr<Tile>> tiles;
 
@@ -67,7 +67,7 @@ std::unique_ptr<GameGrid> GameGrid::ReadFromFile(const std::string &path)
 
     // TODO: parse entities
 
-    return std::unique_ptr<GameGrid>(new GameGrid(std::move(tiles), tilesetPath, grid->width, grid->height));
+    return std::shared_ptr<GameGrid>(new GameGrid(std::move(tiles), tilesetPath, grid->width, grid->height));
 
 }
 

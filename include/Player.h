@@ -11,11 +11,16 @@ public:
     void Init() override;
     void Update(float deltaTime) override;
     void Render(sf::RenderWindow& window) override;
-    inline void SetZoomFactor(float zoomFactor){m_zoomFactor = zoomFactor;};
+    inline void SetZoomFactor(float zoomFactor) override { m_zoomFactor = zoomFactor; };
 
+    inline void SetPosition(sf::Vector2f position) { m_position = position; }
+    [[nodiscard]] inline sf::Vector2f GetPosition() const { return m_position; };
 
 private:
     float m_zoomFactor = 1;
+
+    sf::Vector2f m_position;
+
     TextureRegistry::ResourceHandle m_texture;
     sf::Sprite m_sprite;
 };

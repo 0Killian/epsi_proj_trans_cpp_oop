@@ -119,7 +119,7 @@ public:
     /// \return a new game grid
     ///
     ////////////////////////////////////////////////////////////////////////////
-    static std::unique_ptr<GameGrid> ReadFromFile(const std::string& path);
+    static std::shared_ptr<GameGrid> ReadFromFile(const std::string& path);
 
 private:
 // We need to pack the structures to tell to the compiler to not add any padding

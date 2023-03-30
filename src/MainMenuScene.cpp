@@ -54,22 +54,24 @@ void MainMenuScene::Init()
                 {static_cast<int>(mainMenuSize.x), static_cast<int>(mainMenuSize.y)}
             ));
 
+
             m_testGameGrid = GameGrid::ReadFromFile("assets/tilemaps/tilemap.htf");
+            m_gameObjects.push_back(m_testGameGrid);
 
-            m_player.Init();
-
+            m_player = std::make_shared<Player>();
             m_testGameGrid->SetPlayer(m_player);
+            m_gameObjects.push_back(m_player);
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < m_gameObjects.size(); i++)
             {
-                SPDLOG_INFO("Initializing GameObject {}...", i);
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                int index = static_cast<int>(7.0f / (100.0f / static_cast<float>(i + 1)));
-                SPDLOG_INFO("Index: {}", index);
+                m_gameObjects[i]->Init();
+                float percentage = static_cast<float>(i + 1) / static_cast<float>(m_gameObjects.size()) * 100.0f;
+                int index = static_cast<int>(7.0f / (100.0f / static_cast<float>(percentage + 1)));
                 m_loadingScreenSprite.setTextureRect(sf::IntRect({0, 1080 * index}, {1920, 1080}));
             }
 
-            SPDLOG_INFO("MainMenuScene initialized!");
+            m_testGameGrid->SetPlayer(m_player);
+
             m_loaded = true;
         }
         catch (std::exception &e) {
@@ -147,15 +149,18 @@ void MainMenuScene::Update(float deltaTime)
 
         m_pos += cameraMovement;
         m_zoom += m_zoomDelta * deltaTime;
+        m_zoomDelta = 0;
+
+        m_player->SetZoomFactor(m_zoom);
+        m_player->SetPosition(m_pos);
 
         m_testGameGrid->SetCameraPosition(m_pos);
         m_testGameGrid->SetZoomFactor(m_zoom);
 
-        m_zoomDelta = 0;
-
-        m_testGameGrid->Update(deltaTime);
-        m_player.SetZoomFactor(m_zoom);
-        m_player.Update(deltaTime);
+        for (const auto & m_gameObject : m_gameObjects)
+        {
+            m_gameObject->Update(deltaTime);
+        }
     }
 
 }
@@ -168,8 +173,10 @@ void MainMenuScene::Render(sf::RenderWindow &window) {
     } else {
         // Main Menu
         //window.draw(m_mainMenuSprite);
-        m_testGameGrid->Render(window);
-        m_player.Render(window);
+        for(const auto& m_gameObject : m_gameObjects)
+        {
+            m_gameObject->Render(window);
+        }
     }
 }
 

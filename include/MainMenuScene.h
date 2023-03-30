@@ -32,14 +32,13 @@ private:
     TextureRegistry::ResourceHandle m_mainMenuTexture;
     sf::Sprite m_mainMenuSprite;
 
-    std::unique_ptr<GameGrid> m_testGameGrid;
-
     sf::Vector2f m_cameraMovement;
     sf::Vector2f m_pos;
     float m_zoomDelta = 0.0f;
     float m_zoom = 1.0f;
 
-    Player m_player;
+    std::shared_ptr<Player> m_player;
+    std::shared_ptr<GameGrid> m_testGameGrid;
 
     std::queue<std::exception_ptr> m_exceptions;
 };
