@@ -14,7 +14,7 @@ Application::Application()
 
     // Create and configure the window
     sf::ContextSettings settings;
-    settings.antialiasingLevel = 4;
+    settings.antialiasingLevel = 0;
 
     m_window.create(sf::VideoMode(sf::Vector2u(WINDOW_WIDTH, WINDOW_HEIGHT)), WINDOW_TITLE, sf::Style::Default, settings);
     m_window.setVerticalSyncEnabled(true);

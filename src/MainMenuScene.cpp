@@ -96,21 +96,25 @@ void MainMenuScene::HandleEvent(const sf::Event &event)
         {
             m_cameraMovement.x -= 2;
             m_orientation = LEFT;
+            m_isMoving = true;
         }
         else if (event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
         {
             m_cameraMovement.x += 2;
             m_orientation = RIGHT;
+            m_isMoving = true;
         }
         else if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
         {
             m_cameraMovement.y -= 2;
             m_orientation = UP;
+            m_isMoving = true;
         }
         else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
         {
             m_cameraMovement.y += 2;
             m_orientation = DOWN;
+            m_isMoving = true;
         }
     }
     else if (event.type == sf::Event::KeyReleased)
@@ -118,18 +122,22 @@ void MainMenuScene::HandleEvent(const sf::Event &event)
         if (event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Left)
         {
             m_cameraMovement.x += 2;
+            m_isMoving = false;
         }
         else if(event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
         {
             m_cameraMovement.x -= 2;
+            m_isMoving = false;
         }
         else if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
         {
             m_cameraMovement.y += 2;
+            m_isMoving = false;
         }
         else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
         {
             m_cameraMovement.y -= 2;
+            m_isMoving = false;
         }
     }
     else if (event.type == sf::Event::MouseWheelScrolled)
@@ -173,6 +181,7 @@ void MainMenuScene::Update(float deltaTime)
         m_player->SetOrientation(m_orientation);
         m_player->SetZoomFactor(m_zoom);
         m_player->SetPosition(m_pos);
+        m_player->SetIsMoving(m_isMoving);
 
         m_testGameGrid->SetCameraPosition(m_pos);
         m_testGameGrid->SetZoomFactor(m_zoom);
