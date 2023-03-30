@@ -4,6 +4,7 @@
 #include <MainMenuScene.h>
 #include <Application.h>
 #include <GameGrid.h>
+#include <Player.h>
 
 MainMenuScene::MainMenuScene() : Scene("MainMenuScene")
 {
@@ -54,7 +55,6 @@ void MainMenuScene::Init()
                 {static_cast<int>(mainMenuSize.x), static_cast<int>(mainMenuSize.y)}
             ));
 
-
             m_testGameGrid = GameGrid::ReadFromFile("assets/tilemaps/tilemap.htf");
             m_gameObjects.push_back(m_testGameGrid);
 
@@ -90,18 +90,22 @@ void MainMenuScene::HandleEvent(const sf::Event &event)
         if (event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Left)
         {
             m_cameraMovement.x -= 2;
+            m_orientation = LEFT;
         }
         else if (event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
         {
             m_cameraMovement.x += 2;
+            m_orientation = RIGHT;
         }
         else if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
         {
             m_cameraMovement.y -= 2;
+            m_orientation = UP;
         }
         else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
         {
             m_cameraMovement.y += 2;
+            m_orientation = DOWN;
         }
     }
     else if (event.type == sf::Event::KeyReleased)
@@ -161,6 +165,7 @@ void MainMenuScene::Update(float deltaTime)
             m_zoom = 2.0f;
         }
 
+        m_player->SetOrientation(m_orientation);
         m_player->SetZoomFactor(m_zoom);
         m_player->SetPosition(m_pos);
 
