@@ -86,10 +86,13 @@ public:
     void Terminate();
 
 private:
-    std::vector<std::thread> m_threads;
     std::mutex m_mutex;
+    std::mutex m_initializedMutex;
+    std::vector<std::thread> m_threads;
     std::condition_variable m_condition;
     std::deque<std::function<void()>> m_tasks;
     std::atomic_bool m_shouldStop = false;
     std::atomic_int m_nextThreadId = 0;
+    std::atomic_int m_threadsInitialized = 0;
+    std::condition_variable m_initializedCondition;
 };

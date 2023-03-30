@@ -38,6 +38,12 @@ void ThreadPool::Init()
 #error Not Supported!
 #endif
 
+            // Notify the main thread that this thread is ready to execute tasks
+            m_initializedMutex.lock();
+            m_threadsInitialized++;
+            m_initializedMutex.unlock();
+            m_initializedCondition.notify_one();
+
             // The thread is now ready to execute tasks
             while (true)
             {
@@ -66,6 +72,13 @@ void ThreadPool::Init()
             }
         });
     }
+
+    std::unique_lock<std::mutex> lock(m_initializedMutex);
+    m_initializedCondition.wait(lock, [this]()
+    {
+        return m_threadsInitialized == m_threads.size();
+    });
+    SPDLOG_INFO("All threads initialized!");
 }
 
 void ThreadPool::Terminate()
