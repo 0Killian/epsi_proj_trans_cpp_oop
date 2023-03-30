@@ -8,7 +8,7 @@ WallTile::WallTile(uint64_t textureIndex) : Tile(textureIndex)
 
 }
 
-void WallTile::Update(float deltaTime)
+void WallTile::Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player> player)
 {
 
 }

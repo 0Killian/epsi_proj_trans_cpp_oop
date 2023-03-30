@@ -9,6 +9,7 @@
 #include <string>
 #include "ResourceRegistry.h"
 #include "GameObject.h"
+#include "Player.h"
 
 // The tile types the game supports (each type is associated to a class)
 enum class TileType : uint8_t
@@ -80,6 +81,15 @@ public:
     ///
     ////////////////////////////////////////////////////////////////////////////
     inline void SetZoomFactor(float zoomFactor) override { m_zoomFactor = zoomFactor; }
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  Set the player
+    ///
+    /// \param player the player
+    ///
+    /// \see Player
+    ////////////////////////////////////////////////////////////////////////////
+    inline void SetPlayer(const std::shared_ptr<Player>& player) { m_player = player; }
 
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  A factory function to create a game grid from a file
@@ -162,7 +172,8 @@ public:
 
         virtual ~Tile() = default;
 
-        virtual void Update(float deltaTime) = 0;
+        virtual void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) = 0;
+
     protected:
         friend GameGrid;
 
@@ -218,4 +229,6 @@ private:
 
     sf::Vector2f m_cameraPosition = {0, 0};
     float m_zoomFactor = 1.0f;
+
+    std::shared_ptr<Player> m_player;
 };
