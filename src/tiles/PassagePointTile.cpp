@@ -8,7 +8,7 @@ PassagePointTile::PassagePointTile(uint64_t textureIndex, const uint8_t* data, u
 
 }
 
-void PassagePointTile::Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player> player)
+void PassagePointTile::Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player)
 {
 
 }
