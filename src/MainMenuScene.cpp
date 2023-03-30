@@ -58,6 +58,7 @@ void MainMenuScene::Init()
 
             m_player.Init();
 
+            m_testGameGrid->SetPlayer(m_player);
 
             for (int i = 0; i < 100; i++)
             {

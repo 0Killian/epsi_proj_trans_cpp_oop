@@ -79,6 +79,11 @@ GameGrid::GameGrid(std::vector<std::unique_ptr<Tile>>&& tiles, const std::string
 
 void GameGrid::Update(float deltaTime)
 {
+    for(auto& tile : m_tiles)
+    {
+        tile->Update(deltaTime, *this, m_player);
+    }
+
     if(m_shouldUpdateVertexArray)
     {
         // Update the vertex array
