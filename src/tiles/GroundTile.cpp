@@ -3,7 +3,7 @@
 //
 #include <Tiles.h>
 
-GroundTile::GroundTile(uint64_t textureIndex) : Tile(textureIndex)
+GroundTile::GroundTile(uint64_t textureIndex, sf::Vector2f position) : Tile(textureIndex, position)
 {
 
 }

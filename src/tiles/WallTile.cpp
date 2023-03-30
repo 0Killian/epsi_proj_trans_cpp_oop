@@ -3,7 +3,7 @@
 //
 #include <Tiles.h>
 
-WallTile::WallTile(uint64_t textureIndex) : Tile(textureIndex)
+WallTile::WallTile(uint64_t textureIndex, sf::Vector2f position) : Tile(textureIndex, position)
 {
 
 }
