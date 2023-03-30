@@ -12,13 +12,17 @@ void Player::Init()
 }
 
 void Player::animation(int index, float timer){
-    if(timer < 0.25f){
+    if(timer < 0.1f){
         m_sprite.setTextureRect(sf::IntRect({index, 64}, {32, 64}));
-    } else if(timer < 0.5f){
+    } else if(timer < 0.2f){
         m_sprite.setTextureRect(sf::IntRect({index, 128}, {32, 64}));
-    } else if (timer < 0.75f) {
+    } else if (timer < 0.3f) {
         m_sprite.setTextureRect(sf::IntRect({index, 192}, {32, 64}));
-    } else if (timer > 0.75f) {
+    } else if (timer < 0.4f) {
+        m_sprite.setTextureRect(sf::IntRect({index, 256}, {32, 64}));
+    } else if (timer < 0.5f) {
+        m_sprite.setTextureRect(sf::IntRect({index, 320}, {32, 64}));
+    } else if (timer > 0.6f) {
         m_animationTimer = 0;
     }
 }
