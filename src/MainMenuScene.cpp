@@ -56,6 +56,11 @@ void MainMenuScene::Init()
             ));
 
             m_testGameGrid = GameGrid::ReadFromFile("assets/tilemaps/tilemap.htf");
+            if(m_testGameGrid == nullptr)
+            {
+                throw std::runtime_error("Failed to load tilemap !");
+            }
+
             m_gameObjects.push_back(m_testGameGrid);
 
             m_player = std::make_shared<Player>();
