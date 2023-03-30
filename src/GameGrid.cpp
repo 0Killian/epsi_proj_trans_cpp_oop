@@ -68,6 +68,7 @@ std::unique_ptr<GameGrid> GameGrid::ReadFromFile(const std::string &path)
     // TODO: parse entities
 
     return std::unique_ptr<GameGrid>(new GameGrid(std::move(tiles), tilesetPath, grid->width, grid->height));
+
 }
 
 GameGrid::GameGrid(std::vector<std::unique_ptr<Tile>>&& tiles, const std::string& tileset, int width, int height)
@@ -96,14 +97,15 @@ void GameGrid::Render(sf::RenderWindow& window)
     // Calculate the transform matrix for the grid
     // It is dependent on the camera position and the size of the window (to center the grid)
     states.transform.translate(
-        -m_cameraPosition * TILE_SIZE +
+        -m_cameraPosition * TILE_SIZE * (Application::ZOOM_FACTOR + m_zoomFactor) +
         sf::Vector2f(
-                Application::WINDOW_WIDTH - TILE_SIZE * static_cast<float>(m_width) * m_zoomFactor,
-                Application::WINDOW_HEIGHT - TILE_SIZE * static_cast<float>(m_height) * m_zoomFactor
+                Application::WINDOW_WIDTH - TILE_SIZE * static_cast<float>(m_width) * (Application::ZOOM_FACTOR + m_zoomFactor),
+                Application::WINDOW_HEIGHT - TILE_SIZE * static_cast<float>(m_height) * (Application::ZOOM_FACTOR + m_zoomFactor)
         ) / 2.0f
     );
 
-    states.transform.scale({m_zoomFactor, m_zoomFactor});
+    states.transform.scale({Application::ZOOM_FACTOR + m_zoomFactor, Application::ZOOM_FACTOR + m_zoomFactor});
+
 
     window.draw(m_vertexArray, states);
 }
@@ -183,3 +185,5 @@ sf::VertexArray GameGrid::CreateVertexArray()
 
     return vertexArray;
 }
+
+

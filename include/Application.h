@@ -78,6 +78,7 @@ public:
     static constexpr const char* WINDOW_TITLE = "Stardew";
     static constexpr uint32_t WINDOW_WIDTH = 800;
     static constexpr uint32_t WINDOW_HEIGHT = 600;
+    static constexpr float ZOOM_FACTOR = 1.0f;
 
 protected:
     friend ThreadPool;

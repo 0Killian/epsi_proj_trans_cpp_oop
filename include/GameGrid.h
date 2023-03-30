@@ -79,7 +79,7 @@ public:
     /// \param zoomFactor the zoom factor of the camera
     ///
     ////////////////////////////////////////////////////////////////////////////
-    inline void SetCameraZoom(float zoomFactor) { m_zoomFactor = zoomFactor; }
+    inline void SetZoomFactor(float zoomFactor) override { m_zoomFactor = zoomFactor; }
 
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  A factory function to create a game grid from a file
