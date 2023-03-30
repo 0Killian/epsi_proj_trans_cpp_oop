@@ -68,6 +68,7 @@ std::shared_ptr<GameGrid> GameGrid::ReadFromFile(const std::string &path)
     // TODO: parse entities
 
     return std::shared_ptr<GameGrid>(new GameGrid(std::move(tiles), tilesetPath, grid->width, grid->height));
+
 }
 
 GameGrid::GameGrid(std::vector<std::unique_ptr<Tile>>&& tiles, const std::string& tileset, int width, int height)

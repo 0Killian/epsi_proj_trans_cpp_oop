@@ -40,6 +40,7 @@ private:
     std::shared_ptr<Player> m_player;
     std::shared_ptr<GameGrid> m_testGameGrid;
     Orientation m_orientation;
+    bool m_isMoving;
 
     std::queue<std::exception_ptr> m_exceptions;
 };
