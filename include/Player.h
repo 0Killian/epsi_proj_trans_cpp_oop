@@ -6,11 +6,11 @@
 #include <GameObject.h>
 #include "ResourceRegistry.h"
 
-enum Orientation {
-    UP,
-    RIGHT,
-    DOWN,
-    LEFT
+enum Orientation : int {
+    UP = 1,
+    RIGHT = 2,
+    DOWN = 0,
+    LEFT = 3
 };
 
 class Player : public GameObject{
@@ -24,16 +24,23 @@ public:
     inline void SetPosition(sf::Vector2f position) { m_position = position; }
     [[nodiscard]] inline sf::Vector2f GetPosition() const { return m_position; };
 
+    [[nodiscard]] sf::Rect<float> GetBoundingBox() const;
+
 private:
-    float m_zoomFactor = 1;
+    static constexpr float ANIMATION_DELAY = 0.1f;
+    static constexpr int ANIMATION_FRAME_COUNT = 6;
+    static constexpr int WIDTH = 32;
+    static constexpr int HEIGHT = 64;
+
+    float m_animationTimer = 0.0f;
     Orientation m_orientation = DOWN;
     bool m_isMoving = false;
 
+    float m_zoomFactor = 1;
     sf::Vector2f m_position;
 
     TextureRegistry::ResourceHandle m_texture;
     sf::Sprite m_sprite;
-    float m_animationTimer = 0.0f;
 
-    void animation(int index, float timer);
+    void DoAnimation(int index, float timer);
 };

@@ -14,7 +14,7 @@
 class GroundTile : public GameGrid::Tile
 {
 public:
-    explicit GroundTile(uint64_t textureIndex);
+    explicit GroundTile(uint64_t textureIndex, sf::Vector2f position);
 
     void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) override;
 };
@@ -28,7 +28,7 @@ public:
 class WallTile : public GameGrid::Tile
 {
 public:
-    explicit WallTile(uint64_t textureIndex);
+    explicit WallTile(uint64_t textureIndex, sf::Vector2f position);
 
     void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) override;
 };
@@ -44,7 +44,7 @@ public:
 class PassagePointTile : public GameGrid::Tile
 {
 public:
-    PassagePointTile(uint64_t textureIndex, const uint8_t* data, uint32_t size);
+    PassagePointTile(uint64_t textureIndex, sf::Vector2f position, const uint8_t* data, uint32_t size);
 
     void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) override;
 };
@@ -59,7 +59,7 @@ public:
 class PathTile : public GameGrid::Tile
 {
 public:
-    explicit PathTile(uint64_t textureIndex);
+    explicit PathTile(uint64_t textureIndex, sf::Vector2f position);
 
     void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) override;
 };
@@ -74,7 +74,7 @@ public:
 class SoilTile : public GameGrid::Tile
 {
 public:
-    SoilTile(uint64_t textureIndex, const uint8_t* data, uint32_t size);
+    SoilTile(uint64_t textureIndex, sf::Vector2f position, const uint8_t* data, uint32_t size);
 
     void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) override;
 };

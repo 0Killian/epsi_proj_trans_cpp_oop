@@ -166,7 +166,7 @@ public:
     class Tile
     {
     public:
-        explicit Tile(uint64_t textureIndex) : m_textureIndex(textureIndex) {}
+        explicit Tile(uint64_t textureIndex, sf::Vector2f position) : m_textureIndex(textureIndex), m_position(position) {}
         Tile(const Tile& other) = delete;
         Tile& operator=(const Tile& other) = delete;
 
@@ -184,7 +184,9 @@ public:
         /// \return A new tile subclass
         ///
         ////////////////////////////////////////////////////////////////////////////
-        static std::unique_ptr<Tile> ParseRawTile(RawGameTile* rawTile);
+        static std::unique_ptr<Tile> ParseRawTile(RawGameTile* rawTile, sf::Vector2f position);
+
+        sf::Vector2f m_position;
 
     private:
         uint64_t m_textureIndex;

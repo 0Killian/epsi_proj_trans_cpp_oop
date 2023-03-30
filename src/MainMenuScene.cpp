@@ -8,8 +8,6 @@
 
 MainMenuScene::MainMenuScene() : Scene("MainMenuScene")
 {
-    m_cameraMovement.x = 0;
-    m_cameraMovement.y = 0;
 }
 
 void MainMenuScene::Init()
@@ -94,50 +92,38 @@ void MainMenuScene::HandleEvent(const sf::Event &event)
     {
         if (event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Left)
         {
-            m_cameraMovement.x -= 2;
-            m_orientation = LEFT;
-            m_isMoving = true;
+            m_movement.x -= 1;
         }
         else if (event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
         {
-            m_cameraMovement.x += 2;
-            m_orientation = RIGHT;
-            m_isMoving = true;
+            m_movement.x += 1;
         }
         else if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
         {
-            m_cameraMovement.y -= 2;
-            m_orientation = UP;
-            m_isMoving = true;
+            m_movement.y -= 1;
         }
         else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
         {
-            m_cameraMovement.y += 2;
-            m_orientation = DOWN;
-            m_isMoving = true;
+            m_movement.y += 1;
         }
     }
     else if (event.type == sf::Event::KeyReleased)
     {
         if (event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Left)
         {
-            m_cameraMovement.x += 2;
-            m_isMoving = false;
+            m_movement.x += 1;
         }
         else if(event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
         {
-            m_cameraMovement.x -= 2;
-            m_isMoving = false;
+            m_movement.x -= 1;
         }
         else if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
         {
-            m_cameraMovement.y += 2;
-            m_isMoving = false;
+            m_movement.y += 1;
         }
         else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
         {
-            m_cameraMovement.y -= 2;
-            m_isMoving = false;
+            m_movement.y -= 1;
         }
     }
     else if (event.type == sf::Event::MouseWheelScrolled)
@@ -162,9 +148,36 @@ void MainMenuScene::Update(float deltaTime)
 
     if (m_loaded)
     {
-        sf::Vector2f cameraMovement = {m_cameraMovement.x * deltaTime, m_cameraMovement.y * deltaTime};
+        sf::Vector2f move = sf::Vector2f(0, 0);
+        if(m_movement != sf::Vector2f(0, 0))
+        {
+            m_player->SetIsMoving(true);
+            move = m_movement.normalized() * GameGrid::TILE_SIZE * 2.0f * deltaTime;
 
-        m_pos += cameraMovement;
+            if(m_movement.x < 0)
+            {
+                m_player->SetOrientation(Orientation::LEFT);
+            }
+            else if(m_movement.x > 0)
+            {
+                m_player->SetOrientation(Orientation::RIGHT);
+            }
+            else if(m_movement.y < 0)
+            {
+                m_player->SetOrientation(Orientation::UP);
+            }
+            else if(m_movement.y > 0)
+            {
+                m_player->SetOrientation(Orientation::DOWN);
+            }
+        }
+        else
+        {
+            m_player->SetIsMoving(false);
+        }
+
+        sf::Vector2f pos = m_player->GetPosition() + move;
+
         m_zoom += m_zoomDelta * deltaTime;
         m_zoomDelta = 0;
 
@@ -178,12 +191,9 @@ void MainMenuScene::Update(float deltaTime)
             m_zoom = 2.0f;
         }
 
-        m_player->SetOrientation(m_orientation);
         m_player->SetZoomFactor(m_zoom);
-        m_player->SetPosition(m_pos);
-        m_player->SetIsMoving(m_isMoving);
+        m_player->SetPosition(pos);
 
-        m_testGameGrid->SetCameraPosition(m_pos);
         m_testGameGrid->SetZoomFactor(m_zoom);
 
         for (const auto & m_gameObject : m_gameObjects)
@@ -191,7 +201,6 @@ void MainMenuScene::Update(float deltaTime)
             m_gameObject->Update(deltaTime);
         }
     }
-
 }
 
 
