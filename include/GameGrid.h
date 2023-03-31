@@ -67,20 +67,14 @@ public:
     void Render(sf::RenderWindow& window) override;
 
     ////////////////////////////////////////////////////////////////////////////
-    /// \brief  Set the position of the camera
-    ///
-    /// \param cameraPosition the position of the camera
-    ///
-    ////////////////////////////////////////////////////////////////////////////
-    inline void SetCameraPosition(sf::Vector2f cameraPosition) { m_cameraPosition = cameraPosition; }
-
-    ////////////////////////////////////////////////////////////////////////////
     /// \brief  Set the zoom factor of the camera
     ///
     /// \param zoomFactor the zoom factor of the camera
     ///
     ////////////////////////////////////////////////////////////////////////////
     inline void SetZoomFactor(float zoomFactor) override { m_zoomFactor = zoomFactor; }
+
+    inline bool HandleEvent(const sf::Event& event) override { return false; }
 
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  Set the player
