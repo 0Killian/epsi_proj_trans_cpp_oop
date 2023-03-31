@@ -88,53 +88,11 @@ void MainMenuScene::Init()
 
 void MainMenuScene::HandleEvent(const sf::Event &event)
 {
-    if (event.type == sf::Event::KeyPressed)
+    if (m_loaded)
     {
-        if (event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Left)
+        for (const auto & m_gameObject : m_gameObjects)
         {
-            m_movement.x -= 1;
-        }
-        else if (event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
-        {
-            m_movement.x += 1;
-        }
-        else if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
-        {
-            m_movement.y -= 1;
-        }
-        else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
-        {
-            m_movement.y += 1;
-        }
-    }
-    else if (event.type == sf::Event::KeyReleased)
-    {
-        if (event.key.code == sf::Keyboard::Q || event.key.code == sf::Keyboard::Left)
-        {
-            m_movement.x += 1;
-        }
-        else if(event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
-        {
-            m_movement.x -= 1;
-        }
-        else if (event.key.code == sf::Keyboard::Z || event.key.code == sf::Keyboard::Up)
-        {
-            m_movement.y += 1;
-        }
-        else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
-        {
-            m_movement.y -= 1;
-        }
-    }
-    else if (event.type == sf::Event::MouseWheelScrolled)
-    {
-        m_zoomDelta = event.mouseWheelScroll.delta * 20;
-    }
-    else if (event.type == sf::Event::MouseButtonPressed)
-    {
-        if (event.mouseButton.button == sf::Mouse::Left)
-        {
-
+            m_gameObject->HandleEvent(event);
         }
     }
 }
@@ -148,54 +106,6 @@ void MainMenuScene::Update(float deltaTime)
 
     if (m_loaded)
     {
-        sf::Vector2f move = sf::Vector2f(0, 0);
-        if(m_movement != sf::Vector2f(0, 0))
-        {
-            m_player->SetIsMoving(true);
-            move = m_movement.normalized() * GameGrid::TILE_SIZE * 2.0f * deltaTime;
-
-            if(m_movement.x < 0)
-            {
-                m_player->SetOrientation(Orientation::LEFT);
-            }
-            else if(m_movement.x > 0)
-            {
-                m_player->SetOrientation(Orientation::RIGHT);
-            }
-            else if(m_movement.y < 0)
-            {
-                m_player->SetOrientation(Orientation::UP);
-            }
-            else if(m_movement.y > 0)
-            {
-                m_player->SetOrientation(Orientation::DOWN);
-            }
-        }
-        else
-        {
-            m_player->SetIsMoving(false);
-        }
-
-        sf::Vector2f pos = m_player->GetPosition() + move;
-
-        m_zoom += m_zoomDelta * deltaTime;
-        m_zoomDelta = 0;
-
-        if(m_zoom < 0.5f)
-        {
-            m_zoom = 0.5f;
-        }
-
-        if(m_zoom > 2.0f)
-        {
-            m_zoom = 2.0f;
-        }
-
-        m_player->SetZoomFactor(m_zoom);
-        m_player->SetPosition(pos);
-
-        m_testGameGrid->SetZoomFactor(m_zoom);
-
         for (const auto & m_gameObject : m_gameObjects)
         {
             m_gameObject->Update(deltaTime);
