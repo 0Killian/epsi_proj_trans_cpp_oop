@@ -18,7 +18,8 @@ add_executable(Stardew
         src/tiles/WallTile.cpp
         src/tiles/PathTile.cpp
         src/tiles/SoilTile.cpp
-        src/Player.cpp)
+        src/Player.cpp
+        src/GUILayer.cpp)
 
 target_include_directories(Stardew PRIVATE include)
 target_precompile_headers(Stardew PRIVATE include/Precompiled.h)
