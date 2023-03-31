@@ -88,26 +88,31 @@ void GameGrid::Update(float deltaTime)
 
     sf::Rect<float> playerBoundingBox = m_player->GetBoundingBox();
     sf::Vector2f playerPosition = m_player->GetPosition();
-    if(playerBoundingBox.left < -static_cast<float>(m_width) * TILE_SIZE / 2)
+    float w = static_cast<float>(m_width) * TILE_SIZE / 2.0f;
+    float h = static_cast<float>(m_height) * TILE_SIZE / 2.0f;
+
+    if(playerBoundingBox.left < -w)
     {
-        playerPosition.x += -static_cast<float>(m_width) * TILE_SIZE / 2 - playerBoundingBox.left;
+        playerPosition.x += -w - playerBoundingBox.left;
     }
-    else if(playerBoundingBox.left + playerBoundingBox.width > static_cast<float>(m_width) * TILE_SIZE / 2)
+    else if(playerBoundingBox.left + playerBoundingBox.width > w)
     {
-        playerPosition.x += static_cast<float>(m_width) * TILE_SIZE / 2 - playerBoundingBox.width - playerBoundingBox.left;
+        playerPosition.x += w - playerBoundingBox.width - playerBoundingBox.left;
     }
 
-    if(playerBoundingBox.top < -static_cast<float>(m_height) * TILE_SIZE / 2)
+    if(playerBoundingBox.top < -h)
     {
-        playerPosition.y -= playerBoundingBox.top + static_cast<float>(m_height) * TILE_SIZE / 2;
+        playerPosition.y -= playerBoundingBox.top + h;
     }
-    else if(playerBoundingBox.top + playerBoundingBox.height > static_cast<float>(m_height) * TILE_SIZE / 2)
+    else if(playerBoundingBox.top + playerBoundingBox.height > h)
     {
-        playerPosition.y -= playerBoundingBox.top + playerBoundingBox.height - static_cast<float>(m_height) * TILE_SIZE / 2;
+        playerPosition.y -= playerBoundingBox.top + playerBoundingBox.height - h;
     }
 
     m_player->SetPosition(playerPosition);
     m_cameraPosition = playerPosition;
+
+    m_zoomFactor = m_player->GetZoomFactor();
 
     if(m_shouldUpdateVertexArray)
     {
@@ -127,14 +132,14 @@ void GameGrid::Render(sf::RenderWindow& window)
     // Calculate the transform matrix for the grid
     // It is dependent on the camera position and the size of the window (to center the grid)
     states.transform.translate(
-        -m_cameraPosition * (Application::ZOOM_FACTOR + m_zoomFactor) +
+        -m_cameraPosition * (m_zoomFactor) +
         sf::Vector2f(
-                Application::WINDOW_WIDTH - TILE_SIZE * static_cast<float>(m_width) * (Application::ZOOM_FACTOR + m_zoomFactor),
-                Application::WINDOW_HEIGHT - TILE_SIZE * static_cast<float>(m_height) * (Application::ZOOM_FACTOR + m_zoomFactor)
+                Application::WINDOW_WIDTH - TILE_SIZE * static_cast<float>(m_width) * (m_zoomFactor),
+                Application::WINDOW_HEIGHT - TILE_SIZE * static_cast<float>(m_height) * (m_zoomFactor)
         ) / 2.0f
     );
 
-    states.transform.scale({Application::ZOOM_FACTOR + m_zoomFactor, Application::ZOOM_FACTOR + m_zoomFactor});
+    states.transform.scale({m_zoomFactor, m_zoomFactor});
 
 
     window.draw(m_vertexArray, states);
