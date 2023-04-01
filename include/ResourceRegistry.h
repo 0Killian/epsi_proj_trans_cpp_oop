@@ -215,7 +215,7 @@ public:
     {
         // Lock the registry mutex to prevent multiple threads from
         // modifying the registry at the same time
-        m_registryMutex.lock();
+        std::unique_lock<std::mutex> lock(m_registryMutex);
 
         if(!m_registry.contains(path))
         {
@@ -234,9 +234,6 @@ public:
             // The resource is already loaded, so we increase the usage count
             std::get<0>(m_registry[path]) += 1;
         }
-
-        // Unlock the registry mutex
-        m_registryMutex.unlock();
 
         // Return a handle to the resource
         // We use std::move to avoid copying the handle
@@ -266,7 +263,7 @@ protected:
     {
         // Lock the registry mutex to prevent multiple threads from
         // modifying the registry at the same time
-        m_registryMutex.lock();
+        std::unique_lock<std::mutex> lock(m_registryMutex);
 
         // Decrease the usage count of the resource
         std::get<0>(*element) -= 1;
@@ -275,9 +272,6 @@ protected:
             // The resource is no longer used, so we unload it
             m_registry.erase(path);
         }
-
-        // Unlock the registry mutex
-        m_registryMutex.unlock();
     }
 
 private:

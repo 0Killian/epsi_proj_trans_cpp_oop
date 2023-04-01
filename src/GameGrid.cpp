@@ -26,15 +26,13 @@ std::unique_ptr<GameGrid::Tile> GameGrid::Tile::ParseRawTile(RawGameTile* rawTil
     }
 }
 
-std::shared_ptr<GameGrid> GameGrid::ReadFromFile(const std::string &path)
+void GameGrid::Init()
 {
-    std::vector<std::unique_ptr<Tile>> tiles;
-
     // Open the file and read the header
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(m_path, std::ios::binary);
     if(!file.is_open())
     {
-        return nullptr;
+        throw std::runtime_error("Failed to open file " + m_path);
     }
 
     auto* grid = new RawGameGrid;
@@ -46,37 +44,47 @@ std::shared_ptr<GameGrid> GameGrid::ReadFromFile(const std::string &path)
     {
         auto* newGrid = (RawGameGrid*)malloc(sizeof(RawGameGrid) + dataSize);
         std::memcpy(newGrid, grid, sizeof(RawGameGrid));
+        delete grid;
         grid = newGrid;
     }
     // Read the remaining data
     file.read(reinterpret_cast<char*>(grid->data), dataSize);
 
     // Reserve enough space to store all tiles
-    tiles.reserve(grid->width * grid->height);
+    m_tiles.reserve(grid->width * grid->height);
 
     // Get the tileset path (it is the first field in data)
     std::string tilesetPath(reinterpret_cast<char*>(grid->data), grid->tilesetPathSize);
 
     // Parse tiles
     auto* rawTile = (RawGameTile*)(grid->data + grid->tilesetPathSize);
-    float x = -grid->width / 2;
-    float y = -grid->height / 2;
+    float x = -static_cast<float>(grid->width) / 2.0f;
+    float y = -static_cast<float>(grid->height) / 2.0f;
     while(rawTile < (RawGameTile*)(grid->data + grid->tilesetPathSize + grid->tilesSize))
     {
-        tiles.push_back(Tile::ParseRawTile(rawTile, {x, y}));
+        m_tiles.push_back(Tile::ParseRawTile(rawTile, {x, y}));
         rawTile = (RawGameTile*)((uint8_t*)rawTile + rawTile->size);
     }
 
     // TODO: parse entities
 
-    return std::shared_ptr<GameGrid>(new GameGrid(std::move(tiles), tilesetPath, grid->width, grid->height));
+    m_width = grid->width;
+    m_height = grid->height;
+    m_tilesetTexture = Application::GetInstance().GetTextureRegistry().GetResource(tilesetPath.c_str());
 
+    // Free the grid
+    free(grid);
 }
 
-GameGrid::GameGrid(std::vector<std::unique_ptr<Tile>>&& tiles, const std::string& tileset, int width, int height)
-    : m_width(width), m_height(height), m_tiles(std::move(tiles))
+bool GameGrid::HandleEvent(const sf::Event &event)
 {
-    m_tilesetTexture = Application::GetInstance().GetTextureRegistry().GetResource(tileset.c_str());
+    if(event.type == sf::Event::MouseWheelScrolled)
+    {
+        m_zoomDelta += event.mouseWheelScroll.delta;
+        return true;
+    }
+
+    return false;
 }
 
 void GameGrid::Update(float deltaTime)
@@ -112,7 +120,18 @@ void GameGrid::Update(float deltaTime)
     m_player->SetPosition(playerPosition);
     m_cameraPosition = playerPosition;
 
-    m_zoomFactor = m_player->GetZoomFactor();
+    m_zoomFactor += m_zoomDelta * deltaTime * ZOOM_SPEED;
+    m_zoomDelta = 0;
+
+    if(m_zoomFactor < Application::ZOOM_FACTOR + 0.5f)
+    {
+        m_zoomFactor = Application::ZOOM_FACTOR + 0.5f;
+    }
+
+    if(m_zoomFactor > Application::ZOOM_FACTOR + 2.0f)
+    {
+        m_zoomFactor = Application::ZOOM_FACTOR + 2.0f;
+    }
 
     if(m_shouldUpdateVertexArray)
     {
@@ -132,15 +151,19 @@ void GameGrid::Render(sf::RenderWindow& window)
     // Calculate the transform matrix for the grid
     // It is dependent on the camera position and the size of the window (to center the grid)
     states.transform.translate(
-        -m_cameraPosition * (m_zoomFactor) +
-        sf::Vector2f(
-                Application::WINDOW_WIDTH - TILE_SIZE * static_cast<float>(m_width) * (m_zoomFactor),
-                Application::WINDOW_HEIGHT - TILE_SIZE * static_cast<float>(m_height) * (m_zoomFactor)
+        -sf::Vector2f(
+            TILE_SIZE * static_cast<float>(m_width),
+            TILE_SIZE * static_cast<float>(m_height)
         ) / 2.0f
     );
 
-    states.transform.scale({m_zoomFactor, m_zoomFactor});
-
+    window.setView({
+        m_cameraPosition,
+        sf::Vector2f(
+            DEFAULT_VIEW_WIDTH,
+            DEFAULT_VIEW_WIDTH / Application::GetInstance().GetAspectRatio()
+        ) / m_zoomFactor
+    });
 
     window.draw(m_vertexArray, states);
 }
@@ -168,8 +191,8 @@ sf::VertexArray GameGrid::CreateVertexArray()
         // because the vertex array will be transformed by the renderer
         // in the render function using RenderStates
         sf::Vector2f position(
-            (static_cast<float>(x) * TILE_SIZE - m_cameraPosition.x),
-            (static_cast<float>(y) * TILE_SIZE - m_cameraPosition.y)
+            (static_cast<float>(x) * TILE_SIZE),
+            (static_cast<float>(y) * TILE_SIZE)
         );
 
         // Calculate the texture coordinates of the tile
@@ -180,8 +203,8 @@ sf::VertexArray GameGrid::CreateVertexArray()
         // position of the tile in the grid
         float tu = static_cast<float>(tile->m_textureIndex % static_cast<uint64_t>(
                 static_cast<float>(m_tilesetTexture->getSize().x) / TILE_SIZE));
-        float tv = static_cast<float>(tile->m_textureIndex / static_cast<uint64_t>(
-                static_cast<float>(m_tilesetTexture->getSize().x) / TILE_SIZE));
+        float tv = static_cast<float>(static_cast<float>(tile->m_textureIndex) /
+                static_cast<float>(m_tilesetTexture->getSize().x) / TILE_SIZE);
 
         sf::IntRect textureRect(
             {static_cast<int>(tu * TILE_SIZE), static_cast<int>(tv * TILE_SIZE)},
@@ -221,4 +244,8 @@ sf::VertexArray GameGrid::CreateVertexArray()
     return vertexArray;
 }
 
-
+void GameGrid::SetTile(uint32_t x, uint32_t y, std::unique_ptr<Tile> tile)
+{
+    m_tiles[y * m_width + x] = std::move(tile);
+    m_shouldUpdateVertexArray = true;
+}

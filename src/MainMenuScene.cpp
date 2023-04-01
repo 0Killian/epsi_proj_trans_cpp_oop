@@ -5,6 +5,7 @@
 #include <Application.h>
 #include <GameGrid.h>
 #include <Player.h>
+#include <GUILayer.h>
 
 MainMenuScene::MainMenuScene() : Scene("MainMenuScene")
 {
@@ -17,7 +18,7 @@ void MainMenuScene::Init()
 
     sf::Vector2u loadingScreenSize = static_cast<const sf::Texture &>(m_loadingScreenTexture).getSize();
     loadingScreenSize.y /= 7;
-    sf::Vector2u windowSize = sf::Vector2u(Application::WINDOW_WIDTH, Application::WINDOW_HEIGHT);
+    sf::Vector2u windowSize = sf::Vector2u(Application::GetInstance().GetWindowWidth(), Application::GetInstance().GetWindowHeight());
     sf::Vector2f scale = sf::Vector2f(
             static_cast<float>(windowSize.x) / static_cast<float>(loadingScreenSize.x),
             static_cast<float>(windowSize.y) / static_cast<float>(loadingScreenSize.y)
@@ -31,84 +32,69 @@ void MainMenuScene::Init()
 
     Application::GetInstance().GetThreadPool().Enqueue([this]()
     {
-        try
+        SPDLOG_INFO("Initializing MainMenuScene...");
+
+        m_mainMenuTexture = Application::GetInstance().GetTextureRegistry().GetResource("main_menu.png");
+        m_mainMenuSprite.setTexture(m_mainMenuTexture);
+
+        sf::Vector2u mainMenuSize = static_cast<const sf::Texture &>(m_mainMenuTexture).getSize();
+        sf::Vector2u windowSize = sf::Vector2u(Application::GetInstance().GetWindowWidth(), Application::GetInstance().GetWindowHeight());
+        sf::Vector2f scale = sf::Vector2f(
+                static_cast<float>(windowSize.x) / static_cast<float>(mainMenuSize.x),
+                static_cast<float>(windowSize.y) / static_cast<float>(mainMenuSize.y)
+        );
+
+        m_mainMenuSprite.setScale({std::max(scale.x, scale.y), std::max(scale.x, scale.y)});
+        m_mainMenuSprite.setOrigin({mainMenuSize.x / 2.0f, mainMenuSize.y / 2.0f});
+        m_mainMenuSprite.setPosition({windowSize.x / 2.0f, windowSize.y / 2.0f});
+        m_mainMenuSprite.setTextureRect(sf::IntRect(
+            {0, 0},
+            {static_cast<int>(mainMenuSize.x), static_cast<int>(mainMenuSize.y)}
+        ));
+
+        m_testGameGrid = std::make_shared<GameGrid>("assets/tilemaps/tilemap.htf");
+        m_gameObjects.push_back(m_testGameGrid);
+
+        m_player = std::make_shared<Player>();
+        m_gameObjects.push_back(m_player);
+
+        m_testGameGrid->SetPlayer(m_player);
+        m_player->SetGameGrid(m_testGameGrid);
+
+        m_gameObjects.push_back(std::make_shared<GUILayer>());
+
+        for (int i = 0; i < m_gameObjects.size(); i++)
         {
-            SPDLOG_INFO("Initializing MainMenuScene...");
-
-            m_mainMenuTexture = Application::GetInstance().GetTextureRegistry().GetResource("main_menu.png");
-            m_mainMenuSprite.setTexture(m_mainMenuTexture);
-
-            sf::Vector2u mainMenuSize = static_cast<const sf::Texture &>(m_mainMenuTexture).getSize();
-            sf::Vector2u windowSize = sf::Vector2u(Application::WINDOW_WIDTH, Application::WINDOW_HEIGHT);
-            sf::Vector2f scale = sf::Vector2f(
-                    static_cast<float>(windowSize.x) / static_cast<float>(mainMenuSize.x),
-                    static_cast<float>(windowSize.y) / static_cast<float>(mainMenuSize.y)
-            );
-
-            m_mainMenuSprite.setScale({std::max(scale.x, scale.y), std::max(scale.x, scale.y)});
-            m_mainMenuSprite.setOrigin({mainMenuSize.x / 2.0f, mainMenuSize.y / 2.0f});
-            m_mainMenuSprite.setPosition({windowSize.x / 2.0f, windowSize.y / 2.0f});
-            m_mainMenuSprite.setTextureRect(sf::IntRect(
-                {0, 0},
-                {static_cast<int>(mainMenuSize.x), static_cast<int>(mainMenuSize.y)}
-            ));
-
-            m_testGameGrid = GameGrid::ReadFromFile("assets/tilemaps/tilemap.htf");
-            if(m_testGameGrid == nullptr)
-            {
-                throw std::runtime_error("Failed to load tilemap !");
-            }
-
-            m_gameObjects.push_back(m_testGameGrid);
-
-            m_player = std::make_shared<Player>();
-            m_testGameGrid->SetPlayer(m_player);
-            m_gameObjects.push_back(m_player);
-
-            for (int i = 0; i < m_gameObjects.size(); i++)
-            {
-                m_gameObjects[i]->Init();
-                float percentage = static_cast<float>(i + 1) / static_cast<float>(m_gameObjects.size()) * 100.0f;
-                int index = static_cast<int>(7.0f / (100.0f / static_cast<float>(percentage + 1)));
-                m_loadingScreenSprite.setTextureRect(sf::IntRect({0, 1080 * index}, {1920, 1080}));
-            }
-
-            m_testGameGrid->SetPlayer(m_player);
-
-            m_loaded = true;
+            m_gameObjects[i]->Init();
+            float percentage = static_cast<float>(i + 1) / static_cast<float>(m_gameObjects.size()) * 100.0f;
+            int index = static_cast<int>(7.0f / (100.0f / static_cast<float>(percentage + 1)));
+            m_loadingScreenSprite.setTextureRect(sf::IntRect({0, 1080 * index}, {1920, 1080}));
         }
-        catch (std::exception &e) {
-            m_exceptions.push(std::current_exception());
-        }
+
+        m_loaded = true;
     });
-
-
-
 }
 
 void MainMenuScene::HandleEvent(const sf::Event &event)
 {
     if (m_loaded)
     {
-        for (const auto & m_gameObject : m_gameObjects)
+        // Make all game objects handle events in reverse order so that the game object
+        // that is drawn last handles the event first
+        for (int i = static_cast<int>(m_gameObjects.size()) - 1; i >= 0; i--)
         {
-            m_gameObject->HandleEvent(event);
+            if (m_gameObjects[i]->HandleEvent(event)) break;
         }
     }
 }
 
 void MainMenuScene::Update(float deltaTime)
 {
-    if (!m_loaded && !m_exceptions.empty())
-    {
-        std::rethrow_exception(m_exceptions.front());
-    }
-
     if (m_loaded)
     {
-        for (const auto & m_gameObject : m_gameObjects)
+        for (auto& gameObject : m_gameObjects)
         {
-            m_gameObject->Update(deltaTime);
+            gameObject->Update(deltaTime);
         }
     }
 }
@@ -121,9 +107,9 @@ void MainMenuScene::Render(sf::RenderWindow &window) {
     } else {
         // Main Menu
         //window.draw(m_mainMenuSprite);
-        for(const auto& m_gameObject : m_gameObjects)
+        for(auto& gameObject : m_gameObjects)
         {
-            m_gameObject->Render(window);
+            gameObject->Render(window);
         }
     }
 }

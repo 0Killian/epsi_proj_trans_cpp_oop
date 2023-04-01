@@ -11,7 +11,7 @@ void Player::Init()
     m_sprite.setTexture(m_texture);
     // Center sprite on the screen
     m_sprite.setOrigin({16.0f, 48.0f});
-    m_sprite.setPosition({Application::WINDOW_WIDTH / 2.f, Application::WINDOW_HEIGHT / 2.f});
+    m_sprite.setPosition({0, 0});
     m_sprite.setTextureRect(sf::IntRect({0, 0}, {32, 64}));
 }
 
@@ -37,7 +37,8 @@ void Player::Update(float deltaTime)
     if(m_movement != sf::Vector2f(0, 0))
     {
         m_isMoving = true;
-        move = m_movement.normalized() * GameGrid::TILE_SIZE * 2.0f * deltaTime;
+        move = m_movement.normalized() * GameGrid::TILE_SIZE * deltaTime
+                * (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ? SPRINT_SPEED : WALK_SPEED);
 
         if(m_movement.x < 0)
         {
@@ -63,21 +64,7 @@ void Player::Update(float deltaTime)
 
     m_position += move;
 
-    m_zoomFactor += m_zoomDelta * deltaTime;
-    m_zoomDelta = 0;
-
-    if(m_zoomFactor < Application::ZOOM_FACTOR + 0.5f)
-    {
-        m_zoomFactor = Application::ZOOM_FACTOR + 0.5f;
-    }
-
-    if(m_zoomFactor > Application::ZOOM_FACTOR + 2.0f)
-    {
-        m_zoomFactor = Application::ZOOM_FACTOR + 2.0f;
-    }
-
-    // First sprite
-    m_sprite.setScale({m_zoomFactor, m_zoomFactor});
+    m_sprite.setPosition(m_position);
 
     if(m_isMoving)
     {
@@ -163,11 +150,6 @@ bool Player::HandleEvent(const sf::Event &event)
 
         default: break;
         }
-    }
-    else if (event.type == sf::Event::MouseWheelScrolled)
-    {
-        m_zoomDelta = event.mouseWheelScroll.delta * 20;
-        blockEvent = true;
     }
 
     return blockEvent;

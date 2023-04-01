@@ -16,55 +16,65 @@ void ThreadPool::Init()
     {
         m_threads.emplace_back([this]()
         {
-            // Set the thread id
-            int id = m_nextThreadId++;
-
-            // Initialize the OpenGL context. This is required because OpenGL contexts are not shared
-            // between threads. This means that we need to create a new context for each thread, and
-            // share the OpenGL display list with the main context.
-            sf::Context context;
-            auto mainContext = Application::GetInstance().GetContextId();
-
-            if(!context.setActive(true))
+            try
             {
-                SPDLOG_ERROR("Failed to set context active in another thread!");
-                return;
-            }
+                // Set the thread id
+                int id = m_nextThreadId++;
 
-            // We need to use platform-specific code to share the OpenGL display list
+                // Initialize the OpenGL context. This is required because OpenGL contexts are not shared
+                // between threads. This means that we need to create a new context for each thread, and
+                // share the OpenGL display list with the main context.
+                sf::Context context;
+                if (!context.setActive(true))
+                {
+                    throw std::runtime_error("Failed to activate context!");
+                }
 #ifdef _WIN32
-            wglShareLists(mainContext, wglGetCurrentContext());
+                Application::GetInstance().AddContext(wglGetCurrentContext());
 #else
 #error Not Supported!
 #endif
+                m_creationCondition.notify_one();
 
-            // The thread is now ready to execute tasks
-            while (true)
-            {
-                std::function<void()> task;
+                // The thread is now ready to execute tasks
+                while (true)
                 {
-                    // Lock the mutex and wait for a task to be available
-                    std::unique_lock<std::mutex> lock(m_mutex);
-                    m_condition.wait(lock, [this]()
+                    std::function<void()> task;
                     {
-                        return m_shouldStop || !m_tasks.empty();
-                    });
+                        // Lock the mutex and wait for a task to be available
+                        std::unique_lock<std::mutex> lock(m_mutex);
+                        m_condition.wait(lock, [this]()
+                        {
+                            return m_shouldStop || !m_tasks.empty();
+                        });
 
-                    // If the thread pool is terminating, and there are no more tasks, exit the thread
-                    if (m_shouldStop && m_tasks.empty())
-                    {
-                        return;
+                        // If the thread pool is terminating, and there are no more tasks, exit the thread
+                        if (m_shouldStop && m_tasks.empty())
+                        {
+                            return;
+                        }
+
+                        // Get the next task and remove it from the queue
+                        task = std::move(m_tasks.front());
+                        m_tasks.pop_front();
                     }
 
-                    // Get the next task and remove it from the queue
-                    task = std::move(m_tasks.front());
-                    m_tasks.pop_front();
+                    // Execute the task
+                    task();
                 }
-
-                // Execute the task
-                task();
+            }
+            catch(const std::exception& e)
+            {
+                // Store the exception
+                std::unique_lock<std::mutex> lock(m_exceptionMutex);
+                m_exceptions.push_back(std::current_exception());
             }
         });
+
+        // Wait for the thread to be ready
+        std::mutex mutex;
+        std::unique_lock<std::mutex> lock(mutex);
+        m_creationCondition.wait(lock);
     }
 }
 
@@ -82,5 +92,16 @@ void ThreadPool::Terminate()
     {
         // Wait for the thread to finish
         thread.join();
+    }
+}
+
+void ThreadPool::RethrowExceptions()
+{
+    // Rethrow any exceptions that occurred in the threads
+    std::unique_lock<std::mutex> lock(m_exceptionMutex);
+    if (!m_exceptions.empty())
+    {
+        // Rethrow the first exception
+        std::rethrow_exception(m_exceptions.front());
     }
 }

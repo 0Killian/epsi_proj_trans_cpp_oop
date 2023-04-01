@@ -85,6 +85,15 @@ public:
     ////////////////////////////////////////////////////////////
     void Terminate();
 
+    ////////////////////////////////////////////////////////////
+    /// \brief  Rethrow any exceptions that occurred in the threads
+    ///
+    /// This will rethrow any exceptions that occurred in the threads.
+    /// If no exceptions occurred, this function will do nothing.
+    ///
+    ////////////////////////////////////////////////////////////
+    void RethrowExceptions();
+
 private:
     std::vector<std::thread> m_threads;
     std::mutex m_mutex;
@@ -92,4 +101,7 @@ private:
     std::deque<std::function<void()>> m_tasks;
     std::atomic_bool m_shouldStop = false;
     std::atomic_int m_nextThreadId = 0;
+    std::vector<std::exception_ptr> m_exceptions;
+    std::mutex m_exceptionMutex;
+    std::condition_variable m_creationCondition;
 };

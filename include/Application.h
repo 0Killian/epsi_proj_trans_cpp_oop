@@ -10,6 +10,8 @@
 #include <ResourceRegistry.h>
 #include <ThreadPool.h>
 
+#undef CreateWindow
+
 ////////////////////////////////////////////////////////////
 /// \brief  A singleton class which defines the application
 ///
@@ -75,9 +77,31 @@ public:
     ////////////////////////////////////////////////////////////
     [[nodiscard]] inline ThreadPool& GetThreadPool() { return m_threadPool; }
 
-    static constexpr const char* WINDOW_TITLE = "Stardew";
-    static constexpr uint32_t WINDOW_WIDTH = 800;
-    static constexpr uint32_t WINDOW_HEIGHT = 600;
+    ////////////////////////////////////////////////////////////
+    /// \brief  Returns the window width
+    ///
+    /// \return The window width
+    ///
+    ////////////////////////////////////////////////////////////
+    [[nodiscard]] inline uint32_t GetWindowWidth() const { return m_windowWidth; }
+
+    ////////////////////////////////////////////////////////////
+    /// \brief  Returns the window height
+    ///
+    /// \return The window height
+    ///
+    ////////////////////////////////////////////////////////////
+    [[nodiscard]] inline uint32_t GetWindowHeight() const { return m_windowHeight; }
+
+    ////////////////////////////////////////////////////////////
+    /// \brief  Returns the aspect ratio of the window
+    ///
+    /// \return The aspect ratio of the window
+    ///
+    ////////////////////////////////////////////////////////////
+    [[nodiscard]] inline float GetAspectRatio() const { return static_cast<float>(m_windowWidth) / static_cast<float>(m_windowHeight); }
+
+    static constexpr std::string_view WINDOW_TITLE = "Harvest Haven";
     static constexpr float ZOOM_FACTOR = 1.0f;
 
 protected:
@@ -97,6 +121,25 @@ protected:
 #else
 #error Not Supported!
 #endif
+
+protected:
+    friend ThreadPool;
+
+    ////////////////////////////////////////////////////////////
+    /// \brief  Adds a context to the list of contexts
+    ///
+    /// This function is used to add a context to the list of contexts
+    /// and shares the context with the main context.
+    ///
+    /// \param context The context to add
+    ///
+    ////////////////////////////////////////////////////////////
+#ifdef _WIN32
+    void AddContext(HGLRC context);
+#else
+#error Not Supported!
+#endif
+
 
 private:
     ////////////////////////////////////////////////////////////
@@ -126,24 +169,40 @@ private:
     ////////////////////////////////////////////////////////////
     void Render();
 
+    ////////////////////////////////////////////////////////////
+    /// \brief  Creates the window
+    ///
+    /// \param mode The video mode to use
+    /// \param fullscreen Whether the window should be fullscreen
+    ///
+    ////////////////////////////////////////////////////////////
+    void CreateWindow(sf::VideoMode mode, bool fullscreen);
+
+    static constexpr uint32_t DEFAULT_WINDOW_WIDTH = 1280;
+    static constexpr uint32_t DEFAULT_WINDOW_HEIGHT = 720;
+
     static std::unique_ptr<Application> s_instance;
 
-    bool m_running = true;
+    uint32_t m_windowWidth = DEFAULT_WINDOW_WIDTH;
+    uint32_t m_windowHeight = DEFAULT_WINDOW_HEIGHT;
     sf::RenderWindow m_window;
+    bool m_fullscreen = false;
 
-    TextureRegistry m_textureRegistry;
-
-    sf::Clock m_clock;
+    bool m_running = true;
     float m_timer = 0.0f;
     uint16_t frames = 0;
+    sf::Clock m_clock;
+
+    TextureRegistry m_textureRegistry;
+    ThreadPool m_threadPool;
 
     std::unique_ptr<Scene> m_currentScene;
 
-    ThreadPool m_threadPool;
-
 #ifdef _WIN32
     HGLRC m_contextId;
+    std::vector<HGLRC> m_threadsContext;
 #else
 #error Not Supported!
 #endif
+    std::mutex m_threadsContextMutex;
 };
