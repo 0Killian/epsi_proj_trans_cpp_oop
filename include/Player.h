@@ -4,7 +4,11 @@
 #pragma once
 
 #include <GameObject.h>
+
+#include <utility>
 #include "ResourceRegistry.h"
+
+class GameGrid;
 
 enum Orientation : int {
     UP = 1,
@@ -20,11 +24,10 @@ public:
     void Render(sf::RenderWindow& window) override;
     [[nodiscard]] bool HandleEvent(const sf::Event& event) override;
 
-    inline void SetZoomFactor(float zoomFactor) override { m_zoomFactor = zoomFactor; };
     inline void SetPosition(sf::Vector2f position) { m_position = position; }
+    inline void SetGameGrid(std::shared_ptr<GameGrid> gameGrid) { m_gameGrid = std::move(gameGrid); }
 
     [[nodiscard]] inline sf::Vector2f GetPosition() const { return m_position; };
-    [[nodiscard]] inline float GetZoomFactor() const { return m_zoomFactor; }
     [[nodiscard]] sf::Rect<float> GetBoundingBox() const;
 
 private:
@@ -32,6 +35,8 @@ private:
     static constexpr int ANIMATION_FRAME_COUNT = 6;
     static constexpr int WIDTH = 32;
     static constexpr int HEIGHT = 64;
+    static constexpr float WALK_SPEED = 2.0f;
+    static constexpr float SPRINT_SPEED = 8.0f;
 
     Orientation m_orientation = DOWN;
     float m_animationTimer = 0.0f;
@@ -40,11 +45,10 @@ private:
     sf::Vector2f m_movement;
     sf::Vector2f m_position;
 
-    float m_zoomDelta = 0.0f;
-    float m_zoomFactor = 1.0f;
-
     TextureRegistry::ResourceHandle m_texture;
     sf::Sprite m_sprite;
+
+    std::shared_ptr<GameGrid> m_gameGrid;
 
     void DoAnimation(int index, float timer);
 };

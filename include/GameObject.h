@@ -16,6 +16,5 @@ public:
     virtual void Init() = 0;
     virtual void Update(float deltaTime) = 0;
     virtual void Render(sf::RenderWindow& window) = 0;
-    virtual void SetZoomFactor(float zoomFactor) = 0;
     virtual bool HandleEvent(const sf::Event& event) = 0;
 };

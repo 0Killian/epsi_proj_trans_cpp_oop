@@ -12,13 +12,7 @@ Application::Application()
     // Initialize the subsystems
     RandomNumberGenerator::Init();
 
-    // Create and configure the window
-    sf::ContextSettings settings;
-    settings.antialiasingLevel = 0;
-
-    m_window.create(sf::VideoMode(sf::Vector2u(WINDOW_WIDTH, WINDOW_HEIGHT)), WINDOW_TITLE, sf::Style::Default, settings);
-    m_window.setVerticalSyncEnabled(true);
-    m_window.setKeyRepeatEnabled(false);
+    CreateWindow(sf::VideoMode({DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT}), false);
 
     m_contextId = wglGetCurrentContext();
 }
@@ -47,7 +41,7 @@ void Application::RunMainLoop()
             if(m_timer >= 1.0f)
             {
                 m_timer = 0.0f;
-                SPDLOG_INFO("FPS: {}", frames);
+                m_window.setTitle(std::string(WINDOW_TITLE) + " - " + std::to_string(frames) + " FPS");
                 frames = 0;
             }
 
@@ -83,6 +77,26 @@ void Application::Update(float deltaTime)
             m_running = false;
             return;
         }
+        else if(event.type == sf::Event::Resized)
+        {
+            m_windowWidth = event.size.width;
+            m_windowHeight = event.size.height;
+        }
+        else if(event.type == sf::Event::KeyPressed)
+        {
+            if(event.key.code == sf::Keyboard::F11 || (event.key.code == sf::Keyboard::Enter && event.key.alt))
+            {
+                if(m_fullscreen)
+                {
+                    CreateWindow(sf::VideoMode({DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT}), false);
+                }
+                else if(!sf::VideoMode::getFullscreenModes().empty())
+                {
+                    sf::VideoMode mode = sf::VideoMode::getFullscreenModes()[0];
+                    CreateWindow(mode, true);
+                }
+            }
+        }
 
         m_currentScene->HandleEvent(event);
     }
@@ -108,3 +122,38 @@ void Application::Render()
     // Display the frame to the screen
     m_window.display();
 }
+
+void Application::CreateWindow(sf::VideoMode mode, bool fullscreen)
+{
+    m_window.create(
+            mode,
+            WINDOW_TITLE.data(), sf::Style::Default | (fullscreen ? sf::Style::Fullscreen : 0));
+    m_window.setVerticalSyncEnabled(true);
+    m_window.setKeyRepeatEnabled(false);
+
+    std::unique_lock<std::mutex> lock(m_threadsContextMutex);
+    for(auto& context : m_threadsContext)
+    {
+#ifdef _WIN32
+        wglShareLists(m_contextId, context);
+#else
+#error Not Supported!
+#endif
+    }
+    lock.unlock();
+
+    m_windowWidth = mode.size.x;
+    m_windowHeight = mode.size.y;
+    m_fullscreen = fullscreen;
+}
+
+#ifdef _WIN32
+void Application::AddContext(HGLRC context)
+{
+    std::unique_lock<std::mutex> lock(m_threadsContextMutex);
+    m_threadsContext.push_back(context);
+    wglShareLists(m_contextId, context);
+}
+#else
+#error Not Supported!
+#endif

@@ -38,6 +38,4 @@ private:
 
     std::shared_ptr<Player> m_player;
     std::shared_ptr<GameGrid> m_testGameGrid;
-
-    std::queue<std::exception_ptr> m_exceptions;
 };

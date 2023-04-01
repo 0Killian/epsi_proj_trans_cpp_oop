@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include "ResourceRegistry.h"
 #include "GameObject.h"
 #include "Player.h"
@@ -40,7 +41,49 @@ public:
     GameGrid(const GameGrid& other) = delete;
     GameGrid& operator=(const GameGrid& other) = delete;
 
-    void Init() override {};
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  The constructor
+    ///
+    /// The file needs to be in the HTF format described here :
+    ///
+    /// Header:
+    /// -----------------------------------------------------------------------------------------------------------------
+    /// | width    | height   | tilesetPathSize | tilesSize | entitiesSize | tilesetPath     | tiles     | entities     |
+    /// -----------------------------------------------------------------------------------------------------------------
+    /// | uint32_t | uint32_t | uint32_t        | uint32_t  | uint32_t     | char[]          | Tile[]    | Entity[]     |
+    /// -----------------------------------------------------------------------------------------------------------------
+    /// | 4        | 4        | 4               | 4         | 4            | tileSetPathSize | tilesSize | entitiesSize |
+    /// -----------------------------------------------------------------------------------------------------------------
+    ///
+    /// Tile:
+    /// --------------------------------------------------
+    /// | type     | size     | textureIndex | data      |
+    /// --------------------------------------------------
+    /// | uint8_t  | uint32_t | uint32_t     | uint8_t[] |
+    /// --------------------------------------------------
+    /// | 1        | 4        | 4            | size - 9  |
+    /// --------------------------------------------------
+    ///
+    /// Entity: TODO
+    ///
+    /// \note This does not initializes the game grid, you need to call Init
+    /// \see Init
+    ///
+    /// \param path the path to the file
+    ///
+    ////////////////////////////////////////////////////////////////////////////
+    explicit GameGrid(std::string path) : m_path(std::move(path)) {}
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  Initializes the game grid using the path given in the constructor
+    ///
+    /// This function initializes the game grid, it loads the tileset and the
+    /// tilemap, and creates the vertex array.
+    ///
+    /// \see CreateVertexArray
+    ///
+    ////////////////////////////////////////////////////////////////////////////
+    void Init() override;
 
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  Updates the game grid
@@ -67,14 +110,18 @@ public:
     void Render(sf::RenderWindow& window) override;
 
     ////////////////////////////////////////////////////////////////////////////
-    /// \brief  Set the zoom factor of the camera
+    /// \brief  Handles the wheel scroll event
     ///
-    /// \param zoomFactor the zoom factor of the camera
+    /// The game grid is responsible for the camera, so it handles the wheel
+    /// scroll event to zoom in and out.
+    ///
+    /// \param event the event to handle
+    /// \return true if other objects should not handle the event
+    ///
+    /// \see GameObject::HandleEvent
     ///
     ////////////////////////////////////////////////////////////////////////////
-    inline void SetZoomFactor(float zoomFactor) override { m_zoomFactor = zoomFactor; }
-
-    inline bool HandleEvent(const sf::Event& event) override { return false; }
+    bool HandleEvent(const sf::Event& event) override;
 
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  Set the player
@@ -84,36 +131,6 @@ public:
     /// \see Player
     ////////////////////////////////////////////////////////////////////////////
     inline void SetPlayer(const std::shared_ptr<Player>& player) { m_player = player; }
-
-    ////////////////////////////////////////////////////////////////////////////
-    /// \brief  A factory function to create a game grid from a file
-    ///
-    /// This function needs a path to a file in the HTF format described here :
-    ///
-    /// Header:
-    /// -----------------------------------------------------------------------------------------------------------------
-    /// | width    | height   | tilesetPathSize | tilesSize | entitiesSize | tilesetPath     | tiles     | entities     |
-    /// -----------------------------------------------------------------------------------------------------------------
-    /// | uint32_t | uint32_t | uint32_t        | uint32_t  | uint32_t     | char[]          | Tile[]    | Entity[]     |
-    /// -----------------------------------------------------------------------------------------------------------------
-    /// | 4        | 4        | 4               | 4         | 4            | tileSetPathSize | tilesSize | entitiesSize |
-    /// -----------------------------------------------------------------------------------------------------------------
-    ///
-    /// Tile:
-    /// --------------------------------------------------
-    /// | type     | size     | textureIndex | data      |
-    /// --------------------------------------------------
-    /// | uint8_t  | uint32_t | uint32_t     | uint8_t[] |
-    /// --------------------------------------------------
-    /// | 1        | 4        | 4            | size - 9  |
-    /// --------------------------------------------------
-    ///
-    /// Entity: TODO
-    /// \param path the path to the file
-    /// \return a new game grid
-    ///
-    ////////////////////////////////////////////////////////////////////////////
-    static std::shared_ptr<GameGrid> ReadFromFile(const std::string& path);
 
 private:
 // We need to pack the structures to tell to the compiler to not add any padding
@@ -186,20 +203,34 @@ public:
         uint64_t m_textureIndex;
     };
 
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  Set the tile at the given position
+    ///
+    /// \param x the x position
+    /// \param y the y position
+    /// \param tile the tile to set
+    ///
+    /// \see Tile
+    ////////////////////////////////////////////////////////////////////////////
+    void SetTile(uint32_t x, uint32_t y, std::unique_ptr<Tile> tile);
+
     static constexpr float TILE_SIZE = 32.0f;
 
-private:
-    ////////////////////////////////////////////////////////////////////////////
-    /// \brief  Creates a game grid from the tilemap and the tileset
-    ///
-    /// \param tiles the tilemap of the grid
-    /// \param tileset the tileset used by the tilemap
-    /// \param width the width of the grid
-    /// \param height the height of the grid
-    ///
-    ////////////////////////////////////////////////////////////////////////////
-    explicit GameGrid(std::vector<std::unique_ptr<Tile>>&& tiles, const std::string& tileset, int width, int height);
+protected:
+    friend Tile;
 
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  Triggers the vertex array update
+    ///
+    /// This function triggers the vertex array update, it will be updated on the
+    /// next frame.
+    ///
+    /// \see CreateVertexArray
+    ///
+    ////////////////////////////////////////////////////////////////////////////
+    inline void TriggerVertexArrayUpdate() { m_shouldUpdateVertexArray = true; }
+
+private:
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  Creates a vertex array from the tilemap
     ///
@@ -211,20 +242,23 @@ private:
     ////////////////////////////////////////////////////////////////////////////
     sf::VertexArray CreateVertexArray();
 
+    static constexpr float ZOOM_SPEED = 20.0f;
+    static constexpr float DEFAULT_VIEW_WIDTH = 39.0f * TILE_SIZE;
 
-    std::vector<std::unique_ptr<Tile>> m_tiles;
+    std::string m_path;
 
     TextureRegistry::ResourceHandle m_tilesetTexture;
+    std::vector<std::unique_ptr<Tile>> m_tiles;
+    uint32_t m_width = 0;
+    uint32_t m_height = 0;
 
     sf::VertexArray m_vertexArray;
     std::atomic_bool m_shouldUpdateVertexArray = true;
     std::mutex m_vertexArrayMutex;
 
-    uint32_t m_width;
-    uint32_t m_height;
-
     sf::Vector2f m_cameraPosition = {0, 0};
     float m_zoomFactor = 1.0f;
+    float m_zoomDelta = 0.0f;
 
     std::shared_ptr<Player> m_player;
 };
