@@ -4,6 +4,8 @@
 #include <Player.h>
 #include <Application.h>
 #include <GameGrid.h>
+#include <iostream>
+#include <SFML/Window/Joystick.hpp>
 
 void Player::Init()
 {
@@ -150,6 +152,41 @@ bool Player::HandleEvent(const sf::Event &event)
 
         default: break;
         }
+    }
+    else if (event.type == sf::Event::JoystickMoved)
+    {
+        if (event.joystickMove.axis == sf::Joystick::X)
+        {
+            if (event.joystickMove.position < -20)
+            {
+                m_movement.x = -1;
+            }
+            else if (event.joystickMove.position > 20)
+            {
+                m_movement.x = 1;
+            }
+            else
+            {
+                m_movement.x = 0;
+            }
+        }
+        else if (event.joystickMove.axis == sf::Joystick::Y)
+        {
+            if (event.joystickMove.position < -20)
+            {
+                m_movement.y = -1;
+            }
+            else if (event.joystickMove.position > 20)
+            {
+                m_movement.y = 1;
+            }
+            else
+            {
+                m_movement.y = 0;
+            }
+        }
+
+        return true;
     }
 
     return blockEvent;
