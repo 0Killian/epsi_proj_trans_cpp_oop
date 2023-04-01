@@ -19,7 +19,9 @@ add_executable(HarvestHaven
         src/tiles/PathTile.cpp
         src/tiles/SoilTile.cpp
         src/Player.cpp
-        src/GUILayer.cpp)
+        src/GUILayer.cpp
+        src/Item.cpp
+        src/Inventory.cpp)
 
 
 target_include_directories(HarvestHaven PRIVATE include)

@@ -6,6 +6,8 @@
 #include <GameGrid.h>
 #include <Player.h>
 #include <GUILayer.h>
+#include <Item.h>
+#include <Inventory.h>
 
 MainMenuScene::MainMenuScene() : Scene("MainMenuScene")
 {
@@ -13,6 +15,7 @@ MainMenuScene::MainMenuScene() : Scene("MainMenuScene")
 
 void MainMenuScene::Init()
 {
+    Item patate(1, "Patate", true, 99, 1, true, false);
     m_loadingScreenTexture = Application::GetInstance().GetTextureRegistry().GetResource("chargement.png");
     m_loadingScreenSprite.setTexture(m_loadingScreenTexture);
 
