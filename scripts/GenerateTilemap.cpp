@@ -5,10 +5,9 @@
 enum class TileType : uint8_t
 {
     Ground = 0,
-    Wall = 1,
-    PassagePoint = 2,
-    Path = 3,
-    Soil = 4
+    PassagePoint = 1,
+    Path = 2,
+    Soil = 3
 };
 
 #pragma pack(push, 1)
@@ -28,6 +27,7 @@ struct RawGameTile
     TileType type;
     uint32_t size; // size of total structure
     uint32_t textureIndex; // offset in texture names
+    bool collidable;
     uint8_t data[]; // custom data
 };
 
@@ -43,41 +43,28 @@ struct RawGameEntity
 class Tile
 {
 public:
-    explicit Tile(uint64_t textureIndex) : m_textureIndex(textureIndex) {}
+    explicit Tile(uint64_t textureIndex, bool collidable) : m_textureIndex(textureIndex), m_collidable(collidable) {}
     virtual ~Tile() = default;
 
     virtual RawGameTile* Serialize() = 0;
 
     uint64_t m_textureIndex;
+    bool m_collidable;
 };
 
 
 class GroundTile : public Tile
 {
 public:
-    explicit GroundTile(uint64_t textureIndex) : Tile(textureIndex) {}
+    explicit GroundTile(uint64_t textureIndex, bool collidable) : Tile(textureIndex, collidable) {}
 
     RawGameTile* Serialize() override
     {
-        RawGameTile* tile = new RawGameTile();
+        auto* tile = new RawGameTile();
         tile->type = TileType::Ground;
         tile->size = sizeof(RawGameTile);
         tile->textureIndex = m_textureIndex;
-        return tile;
-    }
-};
-
-class WallTile : public Tile
-{
-public:
-    explicit WallTile(uint64_t textureIndex) : Tile(textureIndex) {}
-
-    RawGameTile* Serialize() override
-    {
-        RawGameTile* tile = new RawGameTile();
-        tile->type = TileType::Wall;
-        tile->size = sizeof(RawGameTile);
-        tile->textureIndex = m_textureIndex;
+        tile->collidable = m_collidable;
         return tile;
     }
 };
@@ -85,16 +72,17 @@ public:
 class PassagePointTile : public Tile
 {
 public:
-    PassagePointTile(uint64_t textureIndex, std::string tilemap, std::pair<uint32_t, uint32_t> position)
-            : Tile(textureIndex), m_tilemap(tilemap), m_position(position) {}
+    PassagePointTile(uint64_t textureIndex, bool collidable, std::string tilemap, std::pair<uint32_t, uint32_t> position)
+            : Tile(textureIndex, collidable), m_tilemap(tilemap), m_position(position) {}
 
     RawGameTile* Serialize() override
     {
         uint64_t size = sizeof(RawGameTile) + m_tilemap.size() + sizeof(uint64_t) * 3;
-        RawGameTile* tile = (RawGameTile*)malloc(size);
+        auto* tile = (RawGameTile*)malloc(size);
         tile->type = TileType::PassagePoint;
         tile->size = size;
         tile->textureIndex = m_textureIndex;
+        tile->collidable = m_collidable;
         tile->data[0] = m_tilemap.size();
         memcpy(tile->data + 1, m_tilemap.c_str(), m_tilemap.size());
         tile->data[m_tilemap.size() + 1] = m_position.first;
@@ -110,14 +98,15 @@ private:
 class PathTile : public Tile
 {
 public:
-    explicit PathTile(uint64_t textureIndex) : Tile(textureIndex) {}
+    explicit PathTile(uint64_t textureIndex, bool collidable) : Tile(textureIndex, collidable) {}
 
     RawGameTile* Serialize() override
     {
-        RawGameTile* tile = new RawGameTile();
+        auto* tile = new RawGameTile();
         tile->type = TileType::Path;
         tile->size = sizeof(RawGameTile);
         tile->textureIndex = m_textureIndex;
+        tile->collidable = m_collidable;
         return tile;
     }
 };
@@ -126,19 +115,20 @@ class SoilTile : public Tile
 {
 public:
     // TODO: support plants
-    SoilTile(uint64_t textureIndex) : Tile(textureIndex) {}
+    SoilTile(uint64_t textureIndex, bool collidable) : Tile(textureIndex, collidable) {}
 
     RawGameTile* Serialize() override
     {
-        RawGameTile* tile = new RawGameTile();
+        auto* tile = new RawGameTile();
         tile->type = TileType::Soil;
         tile->size = sizeof(RawGameTile);
         tile->textureIndex = m_textureIndex;
+        tile->collidable = m_collidable;
         return tile;
     }
 };
 
-std::pair<uint64_t, uint8_t*> SerializeTilemap(std::string tilesetPath, Tile* tilemap[], uint32_t width, uint32_t height)
+std::pair<uint64_t, uint8_t*> SerializeTilemap(const std::string& tilesetPath, Tile* tilemap[], uint32_t width, uint32_t height)
 {
     uint32_t tilesetPathSize = tilesetPath.size();
     uint32_t tilesSize = 0;
@@ -149,7 +139,7 @@ std::pair<uint64_t, uint8_t*> SerializeTilemap(std::string tilesetPath, Tile* ti
     }
 
     uint32_t size = sizeof(RawGameGrid) + tilesetPathSize + tilesSize + entitiesSize;
-    RawGameGrid* grid = (RawGameGrid*)malloc(size);
+    auto* grid = (RawGameGrid*)malloc(size);
     grid->width = width;
     grid->height = height;
     grid->tilesetPathSize = tilesetPathSize;
@@ -182,8 +172,11 @@ int main(int argc, char** argv)
     {
         uint64_t random = rand() % 4;
         if(random == 3) random = 9;
-        tile = new GroundTile(random);
+        tile = new GroundTile(random, false);
     }
+
+    delete tilemap[125 + 126 * 250];
+    tilemap[125 + 126 * 250] = new GroundTile(5, true);
 
     auto [size, data] = SerializeTilemap("tileset.png", tilemap, 250, 250);
     std::ofstream file(outPath, std::ios::binary);

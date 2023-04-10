@@ -13,7 +13,7 @@ void Inventory::Init()
     m_inventory.setTexture(m_texture);
     // Center sprite on the screen
     m_inventory.setOrigin({16.0f, 48.0f});
-    m_inventory.setPosition({Application::WINDOW_WIDTH / 2.f, Application::WINDOW_HEIGHT / 2.f});
+    m_inventory.setPosition({Application::GetInstance().GetWindowWidth() / 2.f, Application::GetInstance().GetWindowHeight() / 2.f});
     m_inventory.setTextureRect(sf::IntRect({0, 0}, {32, 64}));
     count = 0;
 }

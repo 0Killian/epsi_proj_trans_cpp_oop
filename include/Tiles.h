@@ -8,27 +8,13 @@
 ////////////////////////////////////////////////////////////
 /// \brief  A tile that represents ground
 ///
-/// This tile has no special effects. The player wan walk on it
+/// This tile has no special effects.
 ///
 ////////////////////////////////////////////////////////////
 class GroundTile : public GameGrid::Tile
 {
 public:
-    explicit GroundTile(uint64_t textureIndex, sf::Vector2f position);
-
-    void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) override;
-};
-
-////////////////////////////////////////////////////////////
-/// \brief  A tile that represents a wall
-///
-/// This tile has no special effects. The player cannot walk on it
-///
-////////////////////////////////////////////////////////////
-class WallTile : public GameGrid::Tile
-{
-public:
-    explicit WallTile(uint64_t textureIndex, sf::Vector2f position);
+    explicit GroundTile(uint64_t textureIndex, sf::Vector2f position, bool collidable);
 
     void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) override;
 };
@@ -44,7 +30,7 @@ public:
 class PassagePointTile : public GameGrid::Tile
 {
 public:
-    PassagePointTile(uint64_t textureIndex, sf::Vector2f position, const uint8_t* data, uint32_t size);
+    PassagePointTile(uint64_t textureIndex, sf::Vector2f position, bool collidable, const uint8_t* data, uint32_t size);
 
     void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) override;
 };
@@ -59,7 +45,7 @@ public:
 class PathTile : public GameGrid::Tile
 {
 public:
-    explicit PathTile(uint64_t textureIndex, sf::Vector2f position);
+    explicit PathTile(uint64_t textureIndex, sf::Vector2f position, bool collidable);
 
     void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) override;
 };
@@ -74,7 +60,7 @@ public:
 class SoilTile : public GameGrid::Tile
 {
 public:
-    SoilTile(uint64_t textureIndex, sf::Vector2f position, const uint8_t* data, uint32_t size);
+    SoilTile(uint64_t textureIndex, sf::Vector2f position, bool collidable, const uint8_t* data, uint32_t size);
 
     void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) override;
 };
