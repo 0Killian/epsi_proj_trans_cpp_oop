@@ -3,7 +3,7 @@
 //
 #include <Tiles.h>
 
-PassagePointTile::PassagePointTile(uint64_t textureIndex, sf::Vector2f position, const uint8_t* data, uint32_t size) : Tile(textureIndex, position)
+PassagePointTile::PassagePointTile(uint64_t textureIndex, sf::Vector2f position, bool collidable, const uint8_t* data, uint32_t size) : Tile(textureIndex, position, collidable)
 {
 
 }

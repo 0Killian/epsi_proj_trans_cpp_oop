@@ -25,9 +25,11 @@ public:
     [[nodiscard]] bool HandleEvent(const sf::Event& event) override;
 
     inline void SetPosition(sf::Vector2f position) { m_position = position; }
+    inline void SetMovementOffset(sf::Vector2f movement) { m_movementOffset = movement; }
     inline void SetGameGrid(std::shared_ptr<GameGrid> gameGrid) { m_gameGrid = std::move(gameGrid); }
 
     [[nodiscard]] inline sf::Vector2f GetPosition() const { return m_position; };
+    [[nodiscard]] inline sf::Vector2f GetMovement() const { return m_movement; }
     [[nodiscard]] sf::Rect<float> GetBoundingBox() const;
 
 private:
@@ -43,6 +45,8 @@ private:
     bool m_isMoving = false;
 
     sf::Vector2f m_movement;
+    sf::Vector2f m_movementNorm;
+    sf::Vector2f m_movementOffset;
     sf::Vector2f m_position;
 
     TextureRegistry::ResourceHandle m_texture;

@@ -16,10 +16,9 @@
 enum class TileType : uint8_t
 {
     Ground = 0,
-    Wall = 1,
-    PassagePoint = 2,
-    Path = 3,
-    Soil = 4
+    PassagePoint = 1,
+    Path = 2,
+    Soil = 3
 };
 
 ////////////////////////////////////////////////////////////
@@ -40,6 +39,8 @@ class GameGrid : public GameObject
 public:
     GameGrid(const GameGrid& other) = delete;
     GameGrid& operator=(const GameGrid& other) = delete;
+    GameGrid(GameGrid&& other) = delete;
+    GameGrid& operator=(GameGrid&& other) = delete;
 
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  The constructor
@@ -56,13 +57,13 @@ public:
     /// -----------------------------------------------------------------------------------------------------------------
     ///
     /// Tile:
-    /// --------------------------------------------------
-    /// | type     | size     | textureIndex | data      |
-    /// --------------------------------------------------
-    /// | uint8_t  | uint32_t | uint32_t     | uint8_t[] |
-    /// --------------------------------------------------
-    /// | 1        | 4        | 4            | size - 9  |
-    /// --------------------------------------------------
+    /// ---------------------------------------------------------------
+    /// | type     | size     | textureIndex | collidable | data      |
+    /// ---------------------------------------------------------------
+    /// | uint8_t  | uint32_t | uint32_t     | bool       | uint8_t[] |
+    /// ---------------------------------------------------------------
+    /// | 1        | 4        | 4            | 1          | size - 9  |
+    /// ---------------------------------------------------------------
     ///
     /// Entity: TODO
     ///
@@ -152,6 +153,7 @@ private:
         TileType type;
         uint32_t size; // size of total structure
         uint32_t textureIndex; // offset in texture names
+        bool collidable;
         uint8_t data[]; // custom data
     };
 
@@ -177,13 +179,18 @@ public:
     class Tile
     {
     public:
-        explicit Tile(uint64_t textureIndex, sf::Vector2f position) : m_textureIndex(textureIndex), m_position(position) {}
+        explicit Tile(uint64_t textureIndex, sf::Vector2f position, bool collidable)
+            : m_textureIndex(textureIndex), m_position(position), m_collidable(collidable)
+        {}
+
         Tile(const Tile& other) = delete;
         Tile& operator=(const Tile& other) = delete;
 
         virtual ~Tile() = default;
 
         virtual void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) = 0;
+
+        [[nodiscard]] inline sf::FloatRect GetBoundingBox() const { return {m_position * TILE_SIZE, sf::Vector2f(TILE_SIZE, TILE_SIZE)}; }
 
     protected:
         friend GameGrid;
@@ -198,9 +205,8 @@ public:
         static std::unique_ptr<Tile> ParseRawTile(RawGameTile* rawTile, sf::Vector2f position);
 
         sf::Vector2f m_position;
-
-    private:
         uint64_t m_textureIndex;
+        bool m_collidable;
     };
 
     ////////////////////////////////////////////////////////////////////////////
@@ -211,8 +217,21 @@ public:
     /// \param tile the tile to set
     ///
     /// \see Tile
+    ///
     ////////////////////////////////////////////////////////////////////////////
-    void SetTile(uint32_t x, uint32_t y, std::unique_ptr<Tile> tile);
+    void SetTile(int x, int y, std::unique_ptr<Tile> tile);
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  Get the tile at the given position
+    ///
+    /// \param x the x position
+    /// \param y the y position
+    /// \return the tile at the given position
+    ///
+    /// \see Tile
+    ///
+    ////////////////////////////////////////////////////////////////////////////
+    const std::unique_ptr<Tile>& GetTile(int x, int y) const;
 
     static constexpr float TILE_SIZE = 32.0f;
 
@@ -249,6 +268,7 @@ private:
 
     TextureRegistry::ResourceHandle m_tilesetTexture;
     std::vector<std::unique_ptr<Tile>> m_tiles;
+    std::vector<std::unique_ptr<Tile>*> m_collidableTiles;
     uint32_t m_width = 0;
     uint32_t m_height = 0;
 
@@ -256,7 +276,6 @@ private:
     std::atomic_bool m_shouldUpdateVertexArray = true;
     std::mutex m_vertexArrayMutex;
 
-    sf::Vector2f m_cameraPosition = {0, 0};
     float m_zoomFactor = 1.0f;
     float m_zoomDelta = 0.0f;
 

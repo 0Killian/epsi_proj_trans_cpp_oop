@@ -3,7 +3,7 @@
 //
 #include <Tiles.h>
 
-PathTile::PathTile(uint64_t textureIndex, sf::Vector2f position) : Tile(textureIndex, position)
+PathTile::PathTile(uint64_t textureIndex, sf::Vector2f position, bool collidable) : Tile(textureIndex, position, collidable)
 {
 
 }

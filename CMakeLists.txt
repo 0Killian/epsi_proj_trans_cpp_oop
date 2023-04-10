@@ -15,13 +15,12 @@ add_executable(HarvestHaven
         src/GameGrid.cpp
         src/tiles/GroundTile.cpp
         src/tiles/PassagePointTile.cpp
-        src/tiles/WallTile.cpp
         src/tiles/PathTile.cpp
         src/tiles/SoilTile.cpp
         src/Player.cpp
         src/GUILayer.cpp
         src/Item.cpp
-        src/Inventory.cpp)
+        src/Inventory.cpp src/CollisionUtils.cpp)
 
 
 target_include_directories(HarvestHaven PRIVATE include)

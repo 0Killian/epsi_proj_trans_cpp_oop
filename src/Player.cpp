@@ -4,7 +4,6 @@
 #include <Player.h>
 #include <Application.h>
 #include <GameGrid.h>
-#include <iostream>
 #include <SFML/Window/Joystick.hpp>
 
 void Player::Init()
@@ -35,26 +34,24 @@ void Player::DoAnimation(int index, float timer)
 
 void Player::Update(float deltaTime)
 {
-    sf::Vector2f move = sf::Vector2f(0, 0);
-    if(m_movement != sf::Vector2f(0, 0))
+    sf::Vector2f move = (m_movement + m_movementOffset) * deltaTime;
+    if(move != sf::Vector2f(0, 0))
     {
         m_isMoving = true;
-        move = m_movement.normalized() * GameGrid::TILE_SIZE * deltaTime
-                * (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ? SPRINT_SPEED : WALK_SPEED);
 
-        if(m_movement.x < 0)
+        if(move.x < 0)
         {
             m_orientation = Orientation::LEFT;
         }
-        else if(m_movement.x > 0)
+        else if(move.x > 0)
         {
             m_orientation = Orientation::RIGHT;
         }
-        else if(m_movement.y < 0)
+        else if(move.y < 0)
         {
             m_orientation = Orientation::UP;
         }
-        else if(m_movement.y > 0)
+        else if(move.y > 0)
         {
             m_orientation = Orientation::DOWN;
         }
@@ -65,6 +62,7 @@ void Player::Update(float deltaTime)
     }
 
     m_position += move;
+    m_movementOffset = sf::Vector2f(0, 0);
 
     m_sprite.setPosition(m_position);
 
@@ -91,37 +89,41 @@ void Player::Render(sf::RenderWindow& window)
 sf::Rect<float> Player::GetBoundingBox() const
 {
     return {
-        { m_position.x - 16, m_position.y - 48 },
-        { WIDTH, HEIGHT }
+        { m_position.x - 16.0f, m_position.y - 16.0f },
+        { 32.0f, 32.0f }
     };
 }
 
 bool Player::HandleEvent(const sf::Event &event)
 {
-    bool blockEvent = false;
+    bool moved = false;
     if (event.type == sf::Event::KeyPressed)
     {
         switch(event.key.code)
         {
         case sf::Keyboard::Q:
         case sf::Keyboard::Left:
-            m_movement.x -= 1;
-            return true;
+            m_movementNorm.x = -1;
+            moved = true;
+            break;
 
         case sf::Keyboard::D:
         case sf::Keyboard::Right:
-            m_movement.x += 1;
-            return true;
+            m_movementNorm.x = 1;
+            moved = true;
+            break;
 
         case sf::Keyboard::Z:
         case sf::Keyboard::Up:
-            m_movement.y -= 1;
-            return true;
+            m_movementNorm.y = -1;
+            moved = true;
+            break;
 
         case sf::Keyboard::S:
         case sf::Keyboard::Down:
-            m_movement.y += 1;
-            return true;
+            m_movementNorm.y = 1;
+            moved = true;
+            break;
 
         default: break;
         }
@@ -132,23 +134,39 @@ bool Player::HandleEvent(const sf::Event &event)
         {
         case sf::Keyboard::Q:
         case sf::Keyboard::Left:
-            m_movement.x += 1;
-            return true;
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+                m_movementNorm.x = 1;
+            else
+                m_movementNorm.x = 0;
+            moved = true;
+            break;
 
         case sf::Keyboard::D:
         case sf::Keyboard::Right:
-            m_movement.x -= 1;
-            return true;
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+                m_movementNorm.x = -1;
+            else
+                m_movementNorm.x = 0;
+            moved = true;
+            break;
 
         case sf::Keyboard::Z:
         case sf::Keyboard::Up:
-            m_movement.y += 1;
-            return true;
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+                m_movementNorm.y = 1;
+            else
+                m_movementNorm.y = 0;
+            moved = true;
+            break;
 
         case sf::Keyboard::S:
         case sf::Keyboard::Down:
-            m_movement.y -= 1;
-            return true;
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
+                m_movementNorm.y = -1;
+            else
+                m_movementNorm.y = 0;
+            moved = true;
+            break;
 
         default: break;
         }
@@ -159,35 +177,48 @@ bool Player::HandleEvent(const sf::Event &event)
         {
             if (event.joystickMove.position < -20)
             {
-                m_movement.x = -1;
+                m_movementNorm.x = -1;
             }
             else if (event.joystickMove.position > 20)
             {
-                m_movement.x = 1;
+                m_movementNorm.x = 1;
             }
             else
             {
-                m_movement.x = 0;
+                m_movementNorm.x = 0;
             }
         }
         else if (event.joystickMove.axis == sf::Joystick::Y)
         {
             if (event.joystickMove.position < -20)
             {
-                m_movement.y = -1;
+                m_movementNorm.y = -1;
             }
             else if (event.joystickMove.position > 20)
             {
-                m_movement.y = 1;
+                m_movementNorm.y = 1;
             }
             else
             {
-                m_movement.y = 0;
+                m_movementNorm.y = 0;
             }
         }
 
-        return true;
+        moved = true;
     }
 
-    return blockEvent;
+    if(moved)
+    {
+        if(m_movementNorm == sf::Vector2f(0, 0))
+            m_movement = sf::Vector2f(0, 0);
+        else
+            m_movement = m_movementNorm.normalized() * GameGrid::TILE_SIZE;
+
+        if(event.type == sf::Event::JoystickMoved)
+            m_movement *= sf::Joystick::isButtonPressed(event.joystickMove.joystickId, 1) ? SPRINT_SPEED : WALK_SPEED;
+        else
+            m_movement *= sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ? SPRINT_SPEED : WALK_SPEED;
+    }
+
+    return moved;
 }

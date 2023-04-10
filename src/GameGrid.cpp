@@ -1,10 +1,11 @@
 //
 // Created by Killian on 21/03/2023.
 //
-#include <GameGrid.h>
+#include "GameGrid.h"
+#include "Application.h"
+#include "Tiles.h"
+#include "CollisionUtils.h"
 #include <fstream>
-#include <Application.h>
-#include <Tiles.h>
 
 std::unique_ptr<GameGrid::Tile> GameGrid::Tile::ParseRawTile(RawGameTile* rawTile, sf::Vector2f position)
 {
@@ -12,15 +13,13 @@ std::unique_ptr<GameGrid::Tile> GameGrid::Tile::ParseRawTile(RawGameTile* rawTil
     switch(rawTile->type)
     {
     case TileType::Ground:
-        return std::make_unique<GroundTile>(rawTile->textureIndex, position);
-    case TileType::Wall:
-        return std::make_unique<WallTile>(rawTile->textureIndex, position);
+        return std::make_unique<GroundTile>(rawTile->textureIndex, position, rawTile->collidable);
     case TileType::PassagePoint:
-        return std::make_unique<PassagePointTile>(rawTile->textureIndex, position, rawTile->data, rawTile->size);
+        return std::make_unique<PassagePointTile>(rawTile->textureIndex, position, rawTile->collidable, rawTile->data, rawTile->size);
     case TileType::Path:
-        return std::make_unique<PathTile>(rawTile->textureIndex, position);
+        return std::make_unique<PathTile>(rawTile->textureIndex, position, rawTile->collidable);
     case TileType::Soil:
-        return std::make_unique<SoilTile>(rawTile->textureIndex, position, rawTile->data, rawTile->size);
+        return std::make_unique<SoilTile>(rawTile->textureIndex, position, rawTile->collidable, rawTile->data, rawTile->size);
     default:
         return nullptr;
     }
@@ -63,6 +62,17 @@ void GameGrid::Init()
     while(rawTile < (RawGameTile*)(grid->data + grid->tilesetPathSize + grid->tilesSize))
     {
         m_tiles.push_back(Tile::ParseRawTile(rawTile, {x, y}));
+
+        if(rawTile->collidable)
+            m_collidableTiles.push_back(&m_tiles.back());
+
+        x += 1.0f;
+        if(x >= static_cast<float>(grid->width) / 2.0f)
+        {
+            x = -static_cast<float>(grid->width) / 2.0f;
+            y += 1.0f;
+        }
+
         rawTile = (RawGameTile*)((uint8_t*)rawTile + rawTile->size);
     }
 
@@ -118,7 +128,47 @@ void GameGrid::Update(float deltaTime)
     }
 
     m_player->SetPosition(playerPosition);
-    m_cameraPosition = playerPosition;
+
+    // TODO: optimization
+    int topLeftX = -static_cast<int>(m_width) / 2;//static_cast<int>(std::trunc(playerBoundingBox.left / TILE_SIZE));
+    int topLeftY = -static_cast<int>(m_height) / 2;//static_cast<int>(std::trunc(playerBoundingBox.top / TILE_SIZE));
+    int bottomRightX = static_cast<int>(m_width) / 2-1;//static_cast<int>(std::trunc((playerBoundingBox.left + playerBoundingBox.width + rayDirection.x) / TILE_SIZE));
+    int bottomRightY = static_cast<int>(m_height) / 2-1;//static_cast<int>(std::trunc((playerBoundingBox.top + playerBoundingBox.height + rayDirection.y) / TILE_SIZE));
+
+    std::vector<std::pair<CollisionInfo, const std::unique_ptr<Tile>*>> collidedTiles;
+    for(int x = topLeftX; x <= bottomRightX; x++)
+    {
+        for (int y = topLeftY; y <= bottomRightY; y++)
+        {
+            const std::unique_ptr<Tile>& tile = GetTile(x, y);
+            CollisionInfo info = { false };
+
+            if(tile->m_collidable && (info = DynamicRectangleCollision(m_player->GetBoundingBox(), tile->GetBoundingBox(), m_player->GetMovement() * deltaTime)))
+            {
+                collidedTiles.emplace_back(info, &tile);
+            }
+        }
+    }
+
+    if(!collidedTiles.empty())
+    {
+        std::sort(collidedTiles.begin(), collidedTiles.end(), [](const auto& a, const auto& b)
+        {
+            return a.first.penetrationDepth < b.first.penetrationDepth;
+        });
+
+        for(auto& pair : collidedTiles)
+        {
+            CollisionInfo info = pair.first;
+
+            sf::Vector2f movementDelta = info.contactNormal;
+            movementDelta.x *= std::abs(m_player->GetMovement().x);
+            movementDelta.y *= std::abs(m_player->GetMovement().y);
+            movementDelta *= (1.0f - info.penetrationDepth);
+
+            m_player->SetMovementOffset(movementDelta);
+        }
+    }
 
     m_zoomFactor += m_zoomDelta * deltaTime * ZOOM_SPEED;
     m_zoomDelta = 0;
@@ -158,7 +208,7 @@ void GameGrid::Render(sf::RenderWindow& window)
     );
 
     window.setView({
-        m_cameraPosition,
+        m_player->GetPosition(),
         sf::Vector2f(
             DEFAULT_VIEW_WIDTH,
             DEFAULT_VIEW_WIDTH / Application::GetInstance().GetAspectRatio()
@@ -244,8 +294,17 @@ sf::VertexArray GameGrid::CreateVertexArray()
     return vertexArray;
 }
 
-void GameGrid::SetTile(uint32_t x, uint32_t y, std::unique_ptr<Tile> tile)
+void GameGrid::SetTile(int x, int y, std::unique_ptr<Tile> tile)
 {
+    x += static_cast<int>(m_width) / 2;
+    y += static_cast<int>(m_height) / 2;
     m_tiles[y * m_width + x] = std::move(tile);
     m_shouldUpdateVertexArray = true;
+}
+
+const std::unique_ptr<GameGrid::Tile>& GameGrid::GetTile(int x, int y) const
+{
+    x += static_cast<int>(m_width) / 2;
+    y += static_cast<int>(m_height) / 2;
+    return m_tiles[y * m_width + x];
 }
