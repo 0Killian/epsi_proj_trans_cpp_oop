@@ -21,6 +21,9 @@ void GUILayer::Update(float deltaTime)
 
 void GUILayer::Render(sf::RenderWindow& window)
 {
+    // Reset the view to the default one (the one that covers the whole window)
+    window.setView(window.getDefaultView());
+
     for(auto& guiObject : m_guiObjects)
     {
         guiObject->Render(window);
