@@ -32,9 +32,12 @@ public:
     inline void SetGameGrid(std::shared_ptr<GameGrid> gameGrid) { m_gameGrid = std::move(gameGrid); }
     inline void SetHotbar(std::shared_ptr<Hotbar> hotbar) { m_hotbar = std::move(hotbar); }
 
-    [[nodiscard]] inline sf::Vector2f GetPosition() const { return m_position; };
+    [[nodiscard]] inline sf::Vector2f GetPosition() const { return m_position; }
+    [[nodiscard]] sf::Vector2i GetTilePosition() const;
     [[nodiscard]] inline sf::Vector2f GetMovement() const { return m_movement; }
     [[nodiscard]] sf::Rect<float> GetBoundingBox() const;
+
+    void TileArea(sf::IntRect area);
 
 private:
     static constexpr float ANIMATION_DELAY = 0.1f;

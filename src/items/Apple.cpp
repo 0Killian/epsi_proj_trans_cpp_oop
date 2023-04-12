@@ -3,6 +3,8 @@
 //
 #include <Application.h>
 #include "items/Apple.h"
+#include "Player.h"
+#include "GameGrid.h"
 
 Apple::Apple() : Item(ItemId::APPLE)
 {
@@ -11,5 +13,5 @@ Apple::Apple() : Item(ItemId::APPLE)
 
 void Apple::OnUse(Player &player)
 {
-    SPDLOG_INFO("Using Apple !");
+    player.TileArea(sf::IntRect{ player.GetTilePosition(), {1, 1} });
 }
