@@ -1,13 +1,14 @@
 //
 // Created by Killian and Alban on 16/03/2023.
 //
-#include <MainMenuScene.h>
-#include <Application.h>
-#include <GameGrid.h>
-#include <Player.h>
-#include <GUILayer.h>
-#include <Item.h>
-#include <Inventory.h>
+#include <items/Apple.h>
+#include "MainMenuScene.h"
+#include "Application.h"
+#include "GameGrid.h"
+#include "Player.h"
+#include "GUILayer.h"
+#include "Inventory.h"
+#include "Hotbar.h"
 
 MainMenuScene::MainMenuScene() : Scene("MainMenuScene")
 {
@@ -15,7 +16,6 @@ MainMenuScene::MainMenuScene() : Scene("MainMenuScene")
 
 void MainMenuScene::Init()
 {
-    Item patate(1, "Patate", true, 99, 1, true, false);
     m_loadingScreenTexture = Application::GetInstance().GetTextureRegistry().GetResource("chargement.png");
     m_loadingScreenSprite.setTexture(m_loadingScreenTexture);
 
@@ -61,10 +61,17 @@ void MainMenuScene::Init()
         m_player = std::make_shared<Player>();
         m_gameObjects.push_back(m_player);
 
-        m_testGameGrid->SetPlayer(m_player);
-        m_player->SetGameGrid(m_testGameGrid);
+        m_inventory = std::make_shared<Inventory>();
+        m_hotbar = std::make_shared<Hotbar>(m_inventory);
 
-        m_gameObjects.push_back(std::make_shared<GUILayer>());
+        m_guiLayer = std::make_shared<GUILayer>();
+        m_gameObjects.push_back(m_guiLayer);
+
+        m_testGameGrid->SetPlayer(m_player);
+        m_guiLayer->AddGUIObject(m_inventory);
+        m_guiLayer->AddGUIObject(m_hotbar);
+        m_player->SetGameGrid(m_testGameGrid);
+        m_player->SetHotbar(m_hotbar);
 
         for (int i = 0; i < m_gameObjects.size(); i++)
         {
@@ -73,6 +80,8 @@ void MainMenuScene::Init()
             int index = static_cast<int>(7.0f / (100.0f / static_cast<float>(percentage + 1)));
             m_loadingScreenSprite.setTextureRect(sf::IntRect({0, 1080 * index}, {1920, 1080}));
         }
+
+        m_inventory->SetItem(new Apple(), 0);
 
         m_loaded = true;
     });

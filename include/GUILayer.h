@@ -15,6 +15,8 @@ public:
     void Render(sf::RenderWindow& window) override;
     bool HandleEvent(const sf::Event& event) override;
 
+    inline void AddGUIObject(const std::shared_ptr<GameObject>& guiObject) { m_guiObjects.push_back(guiObject); };
+
 private:
     std::vector<std::shared_ptr<GameObject>> m_guiObjects;
 };

@@ -60,8 +60,24 @@ public:
     class ResourceHandle
     {
     public:
-        ResourceHandle(const ResourceHandle&) = delete;
-        ResourceHandle& operator=(const ResourceHandle&) = delete;
+        ResourceHandle(const ResourceHandle& other)
+        {
+            m_element = other.m_element;
+            m_registry = other.m_registry;
+            m_path = other.m_path;
+
+            m_registry->AddReference(m_element);
+        }
+
+        ResourceHandle& operator=(const ResourceHandle& other)
+        {
+            m_element = other.m_element;
+            m_registry = other.m_registry;
+            m_path = other.m_path;
+
+            m_registry->AddReference(m_element);
+            return *this;
+        }
 
         //////////////////////////////////////////////////////////////
         /// \brief  The default constructor.
@@ -272,6 +288,16 @@ protected:
             // The resource is no longer used, so we unload it
             m_registry.erase(path);
         }
+    }
+
+    void AddReference(std::tuple<uint64_t, T>* element)
+    {
+        // Lock the registry mutex to prevent multiple threads from
+        // modifying the registry at the same time
+        std::unique_lock<std::mutex> lock(m_registryMutex);
+
+        // Increase the usage count of the resource
+        std::get<0>(*element) += 1;
     }
 
 private:

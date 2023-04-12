@@ -8,6 +8,11 @@
 
 void Player::Init()
 {
+#ifdef DEBUG
+    assert(m_gameGrid != nullptr);
+    assert(m_hotbar != nullptr);
+#endif
+
     m_texture = Application::GetInstance().GetTextureRegistry().GetResource("player.png");
     m_sprite.setTexture(m_texture);
     // Center sprite on the screen
@@ -79,6 +84,14 @@ void Player::Update(float deltaTime)
         ));
         m_animationTimer = 0;
     }
+
+    m_itemCooldown += deltaTime;
+
+    if(m_itemCooldown >= ITEM_COOLDOWN && m_shouldUseItem)
+    {
+        m_hotbar->UseSelected(*this);
+        m_itemCooldown = 0;
+    }
 }
 
 void Player::Render(sf::RenderWindow& window)
@@ -89,8 +102,8 @@ void Player::Render(sf::RenderWindow& window)
 sf::Rect<float> Player::GetBoundingBox() const
 {
     return {
-        { m_position.x - 16.0f, m_position.y - 16.0f },
-        { 32.0f, 32.0f }
+        { m_position.x - 11.0f, m_position.y + 4.0f },
+        { 22.0f, 12.0f }
     };
 }
 
@@ -205,6 +218,14 @@ bool Player::HandleEvent(const sf::Event &event)
         }
 
         moved = true;
+    }
+    else if(event.type == sf::Event::MouseButtonPressed)
+    {
+        m_shouldUseItem = true;
+    }
+    else if(event.type == sf::Event::MouseButtonReleased)
+    {
+        m_shouldUseItem = false;
     }
 
     if(moved)
