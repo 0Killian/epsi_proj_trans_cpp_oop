@@ -5,6 +5,7 @@
 #include <Application.h>
 #include <GameGrid.h>
 #include <SFML/Window/Joystick.hpp>
+#include <Tiles.h>
 
 void Player::Init()
 {
@@ -242,4 +243,37 @@ bool Player::HandleEvent(const sf::Event &event)
     }
 
     return moved;
+}
+
+void Player::TileArea(sf::IntRect area)
+{
+    for(int y = area.top; y < area.top + area.height; y++)
+    {
+        for(int x = area.left; x < area.left + area.width; x++)
+        {
+            auto& tile = m_gameGrid->GetTile(x, y);
+            if(tile->GetType() == TileType::Ground)
+            {
+                m_gameGrid->SetTile(x, y, std::make_unique<SoilTile>(
+                    SoilTile::TEXTURE_ALL_CONNECTED,
+                    sf::Vector2f(x, y),
+                    false,
+                    nullptr,
+                    0
+                ));
+            }
+        }
+    }
+
+    m_gameGrid->UpdateSoilArea(sf::Vector2f(area.left, area.top));
+}
+
+sf::Vector2i Player::GetTilePosition() const
+{
+    sf::Vector2i position = {
+        static_cast<int>(std::trunc(m_position.x / GameGrid::TILE_SIZE)),
+        static_cast<int>(std::trunc((m_position.y+8) / GameGrid::TILE_SIZE)) // The position of the player is not on the feets
+    };
+
+    return position;
 }

@@ -251,13 +251,11 @@ sf::VertexArray GameGrid::CreateVertexArray()
         // to draw the tile
         // We do this the same way we did to calculate the
         // position of the tile in the grid
-        float tu = static_cast<float>(tile->m_textureIndex % static_cast<uint64_t>(
-                static_cast<float>(m_tilesetTexture->getSize().x) / TILE_SIZE));
-        float tv = static_cast<float>(static_cast<float>(tile->m_textureIndex) /
-                static_cast<float>(m_tilesetTexture->getSize().x) / TILE_SIZE);
+        float tu = static_cast<float>(static_cast<int>(tile->m_textureIndex * TILE_SIZE) % m_tilesetTexture->getSize().x);
+        float tv = std::trunc(static_cast<float>((tile->m_textureIndex * TILE_SIZE) / m_tilesetTexture->getSize().x)) * TILE_SIZE;
 
         sf::IntRect textureRect(
-            {static_cast<int>(tu * TILE_SIZE), static_cast<int>(tv * TILE_SIZE)},
+            {static_cast<int>(tu), static_cast<int>(tv)},
             {static_cast<int>(TILE_SIZE), static_cast<int>(TILE_SIZE)}
         );
 
@@ -307,4 +305,155 @@ const std::unique_ptr<GameGrid::Tile>& GameGrid::GetTile(int x, int y) const
     x += static_cast<int>(m_width) / 2;
     y += static_cast<int>(m_height) / 2;
     return m_tiles[y * m_width + x];
+}
+
+void GameGrid::SetTextureIndexAtTile(int x, int y, uint64_t textureIndex)
+{
+    x += static_cast<int>(m_width) / 2;
+    y += static_cast<int>(m_height) / 2;
+    m_tiles[y * m_width + x]->m_textureIndex = textureIndex;
+    m_shouldUpdateVertexArray = true;
+}
+
+struct TileInfo
+{
+    bool bottom;
+    bool left;
+    bool right;
+    bool top;
+
+    bool bottomLeft;
+    bool bottomRight;
+    bool topLeft;
+    bool topRight;
+};
+
+struct Vector2fKey
+{
+    sf::Vector2f key;
+
+    bool operator==(const Vector2fKey& other) const
+    {
+        return key.x == other.key.x && key.y == other.key.y;
+    }
+};
+
+struct Vector2fKeyHasher
+{
+    std::size_t operator()(const Vector2fKey& key) const
+    {
+        return ((std::hash<float>()(key.key.x) ^ (std::hash<float>()(key.key.y) << 1)) >> 1);
+    }
+};
+
+void CheckSurroundings(float x, float y, std::unordered_map<Vector2fKey, TileInfo, Vector2fKeyHasher>& tiles, GameGrid& grid, TileType type)
+{
+    TileInfo& info = tiles[{{x, y}}];
+
+    if(y+1 < static_cast<float>(grid.GetHeight()) / 2 && grid.GetTile(static_cast<int>(x), static_cast<int>(y)+1)->GetType() == type)
+    {
+        info.bottom = true;
+        if(tiles.find({{x, y+1}}) == tiles.end())
+        {
+            tiles[{{x, y+1}}] = {};
+            CheckSurroundings(x, y+1, tiles, grid, type);
+        }
+
+        if(x-1 > -static_cast<float>(grid.GetWidth()) / 2 && grid.GetTile(static_cast<int>(x)-1, static_cast<int>(y)+1)->GetType() == type)
+        {
+            info.bottomLeft = true;
+            if(tiles.find({{x-1, y+1}}) == tiles.end())
+            {
+                tiles[{{x-1, y+1}}] = {};
+                CheckSurroundings(x-1, y+1, tiles, grid, type);
+            }
+        }
+
+        if(x+1 < static_cast<float>(grid.GetWidth()) / 2 && grid.GetTile(static_cast<int>(x)+1, static_cast<int>(y)+1)->GetType() == type)
+        {
+            info.bottomRight = true;
+            if(tiles.find({{x+1, y+1}}) == tiles.end())
+            {
+                tiles[{{x+1, y+1}}] = {};
+                CheckSurroundings(x+1, y+1, tiles, grid, type);
+            }
+        }
+    }
+
+    if(y-1 > -static_cast<float>(grid.GetHeight()) / 2 && grid.GetTile(static_cast<int>(x), static_cast<int>(y)-1)->GetType() == type)
+    {
+        info.top = true;
+        if(tiles.find({{x, y-1}}) == tiles.end())
+        {
+            tiles[{{x, y-1}}] = {};
+            CheckSurroundings(x, y-1, tiles, grid, type);
+        }
+
+        if(x-1 > -static_cast<float>(grid.GetWidth()) / 2 && grid.GetTile(static_cast<int>(x)-1, static_cast<int>(y)-1)->GetType() == type)
+        {
+            info.topLeft = true;
+            if(tiles.find({{x-1, y-1}}) == tiles.end())
+            {
+                tiles[{{x-1, y-1}}] = {};
+                CheckSurroundings(x-1, y-1, tiles, grid, type);
+            }
+        }
+
+        if(x+1 < static_cast<float>(grid.GetWidth()) / 2 && grid.GetTile(static_cast<int>(x)+1, static_cast<int>(y)-1)->GetType() == type)
+        {
+            info.topRight = true;
+            if(tiles.find({{x+1, y-1}}) == tiles.end())
+            {
+                tiles[{{x+1, y-1}}] = {};
+                CheckSurroundings(x+1, y-1, tiles, grid, type);
+            }
+        }
+    }
+
+    if(x+1 < static_cast<float>(grid.GetWidth()) / 2 && grid.GetTile(static_cast<int>(x)+1, static_cast<int>(y))->GetType() == type)
+    {
+        info.right = true;
+        if(tiles.find({{x+1, y}}) == tiles.end())
+        {
+            tiles[{{x+1, y}}] = {};
+            CheckSurroundings(x+1, y, tiles, grid, type);
+        }
+    }
+
+    if(x-1 > -static_cast<float>(grid.GetWidth()) / 2 && grid.GetTile(static_cast<int>(x)-1, static_cast<int>(y))->GetType() == type)
+    {
+        info.left = true;
+        if(tiles.find({{x-1, y}}) == tiles.end())
+        {
+            tiles[{{x-1, y}}] = {};
+            CheckSurroundings(x-1, y, tiles, grid, type);
+        }
+    }
+}
+
+void GameGrid::UpdateSoilArea(sf::Vector2f pos)
+{
+    std::unordered_map<Vector2fKey, TileInfo, Vector2fKeyHasher> tiles;
+
+    tiles[{pos}] = {};
+
+    CheckSurroundings(pos.x, pos.y, tiles, *this, TileType::Soil);
+
+    for(auto& [key, info] : tiles)
+    {
+        for(auto possibility : SoilTile::TEXTURES)
+        {
+            if(possibility.top && possibility.top != info.top) continue;
+            if(possibility.bottom && possibility.bottom != info.bottom) continue;
+            if(possibility.left && possibility.left != info.left) continue;
+            if(possibility.right && possibility.right != info.right) continue;
+
+            if(possibility.topLeft && possibility.topLeft != info.topLeft) continue;
+            if(possibility.topRight && possibility.topRight != info.topRight) continue;
+            if(possibility.bottomLeft && possibility.bottomLeft != info.bottomLeft) continue;
+            if(possibility.bottomRight && possibility.bottomRight != info.bottomRight) continue;
+
+            SetTextureIndexAtTile(key.key.x, key.key.y, possibility.textureIndex);
+        }
+    }
 }

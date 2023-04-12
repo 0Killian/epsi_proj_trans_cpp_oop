@@ -189,6 +189,7 @@ public:
         virtual ~Tile() = default;
 
         virtual void Update(float deltaTime, GameGrid& grid, const std::shared_ptr<Player>& player) = 0;
+        [[nodiscard]] virtual TileType GetType() const = 0;
 
         [[nodiscard]] inline sf::FloatRect GetBoundingBox() const { return {m_position * TILE_SIZE, sf::Vector2f(TILE_SIZE, TILE_SIZE)}; }
 
@@ -231,7 +232,14 @@ public:
     /// \see Tile
     ///
     ////////////////////////////////////////////////////////////////////////////
-    const std::unique_ptr<Tile>& GetTile(int x, int y) const;
+    [[nodiscard]] const std::unique_ptr<Tile>& GetTile(int x, int y) const;
+
+    void SetTextureIndexAtTile(int x, int y, uint64_t textureIndex);
+
+    [[nodiscard]] uint32_t GetWidth() const { return m_width; }
+    [[nodiscard]] uint32_t GetHeight() const { return m_height; }
+
+    void UpdateSoilArea(sf::Vector2f pos);
 
     static constexpr float TILE_SIZE = 32.0f;
 
