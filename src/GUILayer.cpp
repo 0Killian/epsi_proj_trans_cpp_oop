@@ -1,6 +1,7 @@
 //
 // Created by Killian on 31/03/2023.
 //
+#include <Application.h>
 #include "GUILayer.h"
 
 void GUILayer::Init()
@@ -21,8 +22,11 @@ void GUILayer::Update(float deltaTime)
 
 void GUILayer::Render(sf::RenderWindow& window)
 {
-    // Reset the view to the default one (the one that covers the whole window)
-    window.setView(window.getDefaultView());
+    sf::View view(sf::FloatRect{{0, 0}, {
+        static_cast<float>(Application::GetInstance().GetWindowWidth()),
+        static_cast<float>(Application::GetInstance().GetWindowHeight())
+    }});
+    window.setView(view);
 
     for(auto& guiObject : m_guiObjects)
     {
@@ -36,4 +40,5 @@ bool GUILayer::HandleEvent(const sf::Event& event)
     {
         if(guiObject->HandleEvent(event)) return true;
     }
+    return false;
 }

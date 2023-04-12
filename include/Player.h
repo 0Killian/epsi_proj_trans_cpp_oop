@@ -7,6 +7,8 @@
 
 #include <utility>
 #include "ResourceRegistry.h"
+#include "Inventory.h"
+#include "Hotbar.h"
 
 class GameGrid;
 
@@ -26,7 +28,9 @@ public:
 
     inline void SetPosition(sf::Vector2f position) { m_position = position; }
     inline void SetMovementOffset(sf::Vector2f movement) { m_movementOffset = movement; }
+
     inline void SetGameGrid(std::shared_ptr<GameGrid> gameGrid) { m_gameGrid = std::move(gameGrid); }
+    inline void SetHotbar(std::shared_ptr<Hotbar> hotbar) { m_hotbar = std::move(hotbar); }
 
     [[nodiscard]] inline sf::Vector2f GetPosition() const { return m_position; };
     [[nodiscard]] inline sf::Vector2f GetMovement() const { return m_movement; }
@@ -39,6 +43,7 @@ private:
     static constexpr int HEIGHT = 64;
     static constexpr float WALK_SPEED = 2.0f;
     static constexpr float SPRINT_SPEED = 8.0f;
+    static constexpr float ITEM_COOLDOWN = 1.0f;
 
     Orientation m_orientation = DOWN;
     float m_animationTimer = 0.0f;
@@ -53,6 +58,10 @@ private:
     sf::Sprite m_sprite;
 
     std::shared_ptr<GameGrid> m_gameGrid;
+    std::shared_ptr<Hotbar> m_hotbar;
+
+    bool m_shouldUseItem = false;
+    float m_itemCooldown = 0;
 
     void DoAnimation(int index, float timer);
 };

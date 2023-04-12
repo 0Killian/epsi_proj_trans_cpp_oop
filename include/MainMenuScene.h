@@ -9,6 +9,8 @@
 #include "ResourceRegistry.h"
 #include "GameGrid.h"
 #include "Player.h"
+#include "GUILayer.h"
+#include "Inventory.h"
 
 // A temporary scene
 
@@ -33,9 +35,10 @@ private:
     sf::Sprite m_mainMenuSprite;
 
     sf::Vector2f m_movement;
-    float m_zoomDelta = 0.0f;
-    float m_zoom = 1.0f;
 
     std::shared_ptr<Player> m_player;
     std::shared_ptr<GameGrid> m_testGameGrid;
+    std::shared_ptr<GUILayer> m_guiLayer;
+    std::shared_ptr<Inventory> m_inventory;
+    std::shared_ptr<Hotbar> m_hotbar;
 };

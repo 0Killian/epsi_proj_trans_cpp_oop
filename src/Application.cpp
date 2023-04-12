@@ -95,6 +95,15 @@ void Application::Update(float deltaTime)
                     sf::VideoMode mode = sf::VideoMode::getFullscreenModes()[0];
                     CreateWindow(mode, true);
                 }
+
+                sf::Event resizeEvent{};
+                resizeEvent.type = sf::Event::Resized;
+                resizeEvent.size.width = m_windowWidth;
+                resizeEvent.size.height = m_windowHeight;
+
+                m_currentScene->HandleEvent(resizeEvent);
+
+                continue;
             }
         }
 

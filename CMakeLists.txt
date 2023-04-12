@@ -20,7 +20,9 @@ add_executable(HarvestHaven
         src/Player.cpp
         src/GUILayer.cpp
         src/Item.cpp
-        src/Inventory.cpp src/CollisionUtils.cpp)
+        src/Inventory.cpp
+        src/CollisionUtils.cpp
+        src/Hotbar.cpp src/items/Apple.cpp)
 
 
 target_include_directories(HarvestHaven PRIVATE include)
