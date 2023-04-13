@@ -166,4 +166,19 @@ public:
             {true, true, true, true, true, false, false, false, SoilTile::TEXTURE_ALL_CONNECTED_BOTTOM_RIGHT_CORNER},
             {true, true, true, true, false, true, false, false, SoilTile::TEXTURE_ALL_CONNECTED_BOTTOM_LEFT_CORNER}
     };
+private:
+    enum class PlantType
+    {
+        NONE,
+        CARROT,
+        POTATO,
+        CHERRY,
+        APPLE
+    };
+
+    bool m_hasPlant;
+    bool m_isWatered;
+    int m_timeElapsed;
+    //static constexpr int FULL_GROWTH_TIME = "temps qu'une plante prend à pousser";
+
 };
