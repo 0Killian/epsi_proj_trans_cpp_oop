@@ -6,6 +6,7 @@
 #include "Tiles.h"
 #include "CollisionUtils.h"
 #include <fstream>
+#include "Player.h"
 
 std::unique_ptr<GameGrid::Tile> GameGrid::Tile::ParseRawTile(RawGameTile* rawTile, sf::Vector2f position)
 {
@@ -13,13 +14,13 @@ std::unique_ptr<GameGrid::Tile> GameGrid::Tile::ParseRawTile(RawGameTile* rawTil
     switch(rawTile->type)
     {
     case TileType::Ground:
-        return std::make_unique<GroundTile>(rawTile->textureIndex, position, rawTile->collidable);
+        return std::make_unique<GroundTile>(rawTile, position);
     case TileType::PassagePoint:
-        return std::make_unique<PassagePointTile>(rawTile->textureIndex, position, rawTile->collidable, rawTile->data, rawTile->size);
+        return std::make_unique<PassagePointTile>(rawTile, position);
     case TileType::Path:
-        return std::make_unique<PathTile>(rawTile->textureIndex, position, rawTile->collidable);
+        return std::make_unique<PathTile>(rawTile, position);
     case TileType::Soil:
-        return std::make_unique<SoilTile>(rawTile->textureIndex, position, rawTile->collidable, rawTile->data, rawTile->size);
+        return std::make_unique<SoilTile>(rawTile, position);
     default:
         return nullptr;
     }
@@ -39,7 +40,6 @@ void GameGrid::Init()
 
     // Calculate the size of the data
     uint32_t dataSize = grid->tilesetPathSize + grid->tilesSize + grid->entitiesSize;
-
     {
         auto* newGrid = (RawGameGrid*)malloc(sizeof(RawGameGrid) + dataSize);
         std::memcpy(newGrid, grid, sizeof(RawGameGrid));
@@ -61,6 +61,8 @@ void GameGrid::Init()
     float y = -static_cast<float>(grid->height) / 2.0f;
     while(rawTile < (RawGameTile*)(grid->data + grid->tilesetPathSize + grid->tilesSize))
     {
+        if(rawTile->size != 14)
+        SPDLOG_INFO("size: {}", rawTile->size);
         m_tiles.push_back(Tile::ParseRawTile(rawTile, {x, y}));
 
         if(rawTile->collidable)
@@ -81,6 +83,24 @@ void GameGrid::Init()
     m_width = grid->width;
     m_height = grid->height;
     m_tilesetTexture = Application::GetInstance().GetTextureRegistry().GetResource(tilesetPath.c_str());
+
+    m_renderState.texture = m_tilesetTexture.GetPointer();
+    // Calculate the transform matrix for the grid
+    // It is dependent on the camera position and the size of the window (to center the grid)
+    /*m_renderState.transform.translate(
+        -sf::Vector2f(
+            TILE_SIZE * static_cast<float>(m_width),
+            TILE_SIZE * static_cast<float>(m_height)
+        ) / 2.0f
+    );*/
+
+    if(!m_renderTexture.create({
+        static_cast<unsigned int>(TILE_SIZE * static_cast<float>(m_width)),
+        static_cast<unsigned int>(TILE_SIZE * static_cast<float>(m_height))
+    }))
+    {
+        throw std::runtime_error("Failed to create render texture");
+    }
 
     // Free the grid
     free(grid);
@@ -129,24 +149,15 @@ void GameGrid::Update(float deltaTime)
 
     m_player->SetPosition(playerPosition);
 
-    // TODO: optimization
-    int topLeftX = -static_cast<int>(m_width) / 2;//static_cast<int>(std::trunc(playerBoundingBox.left / TILE_SIZE));
-    int topLeftY = -static_cast<int>(m_height) / 2;//static_cast<int>(std::trunc(playerBoundingBox.top / TILE_SIZE));
-    int bottomRightX = static_cast<int>(m_width) / 2-1;//static_cast<int>(std::trunc((playerBoundingBox.left + playerBoundingBox.width + rayDirection.x) / TILE_SIZE));
-    int bottomRightY = static_cast<int>(m_height) / 2-1;//static_cast<int>(std::trunc((playerBoundingBox.top + playerBoundingBox.height + rayDirection.y) / TILE_SIZE));
-
     std::vector<std::pair<CollisionInfo, const std::unique_ptr<Tile>*>> collidedTiles;
-    for(int x = topLeftX; x <= bottomRightX; x++)
-    {
-        for (int y = topLeftY; y <= bottomRightY; y++)
-        {
-            const std::unique_ptr<Tile>& tile = GetTile(x, y);
-            CollisionInfo info = { false };
 
-            if(tile->m_collidable && (info = DynamicRectangleCollision(m_player->GetBoundingBox(), tile->GetBoundingBox(), m_player->GetMovement() * deltaTime)))
-            {
-                collidedTiles.emplace_back(info, &tile);
-            }
+    for(auto& tile : m_collidableTiles)
+    {
+        CollisionInfo info = DynamicRectangleCollision(m_player->GetBoundingBox(), (*tile)->GetBoundingBox(), m_player->GetMovement() * deltaTime);
+
+        if(info)
+        {
+            collidedTiles.emplace_back(info, tile);
         }
     }
 
@@ -183,39 +194,29 @@ void GameGrid::Update(float deltaTime)
         m_zoomFactor = Application::ZOOM_FACTOR + 2.0f;
     }
 
-    if(m_shouldUpdateVertexArray)
-    {
-        // Update the vertex array
-        m_vertexArrayMutex.lock();
-        m_vertexArray = std::move(CreateVertexArray());
-        m_vertexArrayMutex.unlock();
-        m_shouldUpdateVertexArray = false;
-    }
-}
-
-void GameGrid::Render(sf::RenderWindow& window)
-{
-    sf::RenderStates states;
-    states.texture = m_tilesetTexture.GetPointer();
-
-    // Calculate the transform matrix for the grid
-    // It is dependent on the camera position and the size of the window (to center the grid)
-    states.transform.translate(
-        -sf::Vector2f(
-            TILE_SIZE * static_cast<float>(m_width),
-            TILE_SIZE * static_cast<float>(m_height)
-        ) / 2.0f
-    );
-
-    window.setView({
+    m_renderView = {
         m_player->GetPosition(),
         sf::Vector2f(
             DEFAULT_VIEW_WIDTH,
             DEFAULT_VIEW_WIDTH / Application::GetInstance().GetAspectRatio()
         ) / m_zoomFactor
-    });
+    };
 
-    window.draw(m_vertexArray, states);
+    m_vertexArray = std::move(CreateVertexArray());
+}
+
+void GameGrid::Render(sf::RenderWindow& window)
+{
+    m_renderTexture.draw(m_vertexArray, m_renderState);
+    m_renderTexture.display();
+    sf::Sprite sprite(m_renderTexture.getTexture());
+    sprite.setPosition(-sf::Vector2f(
+            TILE_SIZE * static_cast<float>(m_width),
+            TILE_SIZE * static_cast<float>(m_height)
+    ) / 2.0f);
+
+    window.setView(m_renderView);
+    window.draw(sprite);
 }
 
 sf::VertexArray GameGrid::CreateVertexArray()
@@ -228,91 +229,90 @@ sf::VertexArray GameGrid::CreateVertexArray()
     // defining triangles
     sf::VertexArray vertexArray(sf::PrimitiveType::Triangles);
 
-    for(uint64_t i = 0; i < m_tiles.size(); i++)
+    int startX = static_cast<int>((m_renderView.getCenter().x - m_renderView.getSize().x / 2.0f) / TILE_SIZE) - 1;
+    int startY = static_cast<int>((m_renderView.getCenter().y - m_renderView.getSize().y / 2.0f) / TILE_SIZE) - 1;
+    int endX = static_cast<int>((m_renderView.getCenter().x + m_renderView.getSize().x / 2.0f) / TILE_SIZE) + 1;
+    int endY = static_cast<int>((m_renderView.getCenter().y + m_renderView.getSize().y / 2.0f) / TILE_SIZE) + 1;
+
+    for(int y = startY; y < endY; y++)
     {
-        std::unique_ptr<Tile>& tile = m_tiles[i];
+        for (int x = startX; x < endX; x++)
+        {
+            auto& tile = GetTile(x, y);
 
-        // Calculate the position of the tile in the grid
-        uint64_t x = i % m_width;
-        uint64_t y = i / m_width;
+            // Calculate its position in the vertex array
+            // We do not apply any transformations here (like the camera position)
+            // because the vertex array will be transformed by the renderer
+            // in the render function using RenderStates
+            sf::Vector2f position(
+                (static_cast<float>(x + static_cast<float>(m_width) / 2.0f) * TILE_SIZE),
+                (static_cast<float>(y + static_cast<float>(m_height) / 2.0f) * TILE_SIZE)
+            );
 
-        // Calculate its position in the vertex array
-        // We do not apply any transformations here (like the camera position)
-        // because the vertex array will be transformed by the renderer
-        // in the render function using RenderStates
-        sf::Vector2f position(
-            (static_cast<float>(x) * TILE_SIZE),
-            (static_cast<float>(y) * TILE_SIZE)
-        );
+            for(uint32_t& textureIndex : tile->m_textureIndices)
+            {
+                // Calculate the texture coordinates of the tile
+                // A texture coordinates (u,v) is a pair of numbers
+                // that represent which part of the texture is used
+                // to draw the tile
+                // We do this the same way we did to calculate the
+                // position of the tile in the grid
+                float tu = static_cast<float>(static_cast<int>(textureIndex * TILE_SIZE) % m_tilesetTexture->getSize().x);
+                float tv = std::trunc(static_cast<float>((textureIndex * TILE_SIZE) / m_tilesetTexture->getSize().x)) * TILE_SIZE;
 
-        // Calculate the texture coordinates of the tile
-        // A texture coordinates (u,v) is a pair of numbers
-        // that represent which part of the texture is used
-        // to draw the tile
-        // We do this the same way we did to calculate the
-        // position of the tile in the grid
-        float tu = static_cast<float>(static_cast<int>(tile->m_textureIndex * TILE_SIZE) % m_tilesetTexture->getSize().x);
-        float tv = std::trunc(static_cast<float>((tile->m_textureIndex * TILE_SIZE) / m_tilesetTexture->getSize().x)) * TILE_SIZE;
+                sf::IntRect textureRect(
+                    {static_cast<int>(tu), static_cast<int>(tv)},
+                    {static_cast<int>(TILE_SIZE), static_cast<int>(TILE_SIZE)}
+                );
 
-        sf::IntRect textureRect(
-            {static_cast<int>(tu), static_cast<int>(tv)},
-            {static_cast<int>(TILE_SIZE), static_cast<int>(TILE_SIZE)}
-        );
+                // Add the vertices to the vertex array
+                // We need to add draw 2 triangles in a square
+                // to draw the tile, so we add 6 vertices
+                vertexArray.append(sf::Vertex(
+                    position,
+                    {static_cast<float>(textureRect.left), static_cast<float>(textureRect.top)}
+                ));
+                vertexArray.append(sf::Vertex(
+                    position + sf::Vector2f(TILE_SIZE, 0),
+                    {static_cast<float>(textureRect.left + textureRect.width), static_cast<float>(textureRect.top)}
+                ));
+                vertexArray.append(sf::Vertex(
+                    position + sf::Vector2f(0, TILE_SIZE),
+                    {static_cast<float>(textureRect.left), static_cast<float>(textureRect.top + textureRect.height)}
+                ));
 
-        // Add the vertices to the vertex array
-        // We need to add draw 2 triangles in a square
-        // to draw the tile, so we add 6 vertices
-        vertexArray.append(sf::Vertex(
-            position,
-            {static_cast<float>(textureRect.left), static_cast<float>(textureRect.top)}
-        ));
-        vertexArray.append(sf::Vertex(
-            position + sf::Vector2f(TILE_SIZE, 0),
-            {static_cast<float>(textureRect.left + textureRect.width), static_cast<float>(textureRect.top)}
-        ));
-        vertexArray.append(sf::Vertex(
-            position + sf::Vector2f(0, TILE_SIZE),
-            {static_cast<float>(textureRect.left), static_cast<float>(textureRect.top + textureRect.height)}
-        ));
-
-        vertexArray.append(sf::Vertex(
-            position + sf::Vector2f(TILE_SIZE, 0),
-            {static_cast<float>(textureRect.left + textureRect.width), static_cast<float>(textureRect.top)}
-        ));
-        vertexArray.append(sf::Vertex(
-            position + sf::Vector2f(TILE_SIZE, TILE_SIZE),
-            {static_cast<float>(textureRect.left + textureRect.width), static_cast<float>(textureRect.top + textureRect.height)}
-        ));
-        vertexArray.append(sf::Vertex(
-            position + sf::Vector2f(0, TILE_SIZE),
-            {static_cast<float>(textureRect.left), static_cast<float>(textureRect.top + textureRect.height)}
-        ));
+                vertexArray.append(sf::Vertex(
+                    position + sf::Vector2f(TILE_SIZE, 0),
+                    {static_cast<float>(textureRect.left + textureRect.width), static_cast<float>(textureRect.top)}
+                ));
+                vertexArray.append(sf::Vertex(
+                    position + sf::Vector2f(TILE_SIZE, TILE_SIZE),
+                    {static_cast<float>(textureRect.left + textureRect.width),
+                     static_cast<float>(textureRect.top + textureRect.height)}
+                ));
+                vertexArray.append(sf::Vertex(
+                    position + sf::Vector2f(0, TILE_SIZE),
+                    {static_cast<float>(textureRect.left), static_cast<float>(textureRect.top + textureRect.height)}
+                ));
+            }
+        }
     }
 
     return vertexArray;
 }
 
-void GameGrid::SetTile(int x, int y, std::unique_ptr<Tile> tile)
-{
-    x += static_cast<int>(m_width) / 2;
-    y += static_cast<int>(m_height) / 2;
-    m_tiles[y * m_width + x] = std::move(tile);
-    m_shouldUpdateVertexArray = true;
-}
-
-const std::unique_ptr<GameGrid::Tile>& GameGrid::GetTile(int x, int y) const
+std::unique_ptr<GameGrid::Tile>& GameGrid::GetTile(int x, int y)
 {
     x += static_cast<int>(m_width) / 2;
     y += static_cast<int>(m_height) / 2;
     return m_tiles[y * m_width + x];
 }
 
-void GameGrid::SetTextureIndexAtTile(int x, int y, uint64_t textureIndex)
+void GameGrid::SetTextureIndexAtTile(int x, int y, uint64_t layer, uint32_t textureIndex)
 {
     x += static_cast<int>(m_width) / 2;
     y += static_cast<int>(m_height) / 2;
-    m_tiles[y * m_width + x]->m_textureIndex = textureIndex;
-    m_shouldUpdateVertexArray = true;
+    m_tiles[y * m_width + x]->m_textureIndices[layer] = textureIndex;
 }
 
 struct TileInfo
@@ -453,7 +453,8 @@ void GameGrid::UpdateSoilArea(sf::Vector2f pos)
             if(possibility.bottomLeft && possibility.bottomLeft != info.bottomLeft) continue;
             if(possibility.bottomRight && possibility.bottomRight != info.bottomRight) continue;
 
-            SetTextureIndexAtTile(key.key.x, key.key.y, possibility.textureIndex);
+            SetTextureIndexAtTile(key.key.x, key.key.y, 1, possibility.textureIndex);
+            break;
         }
     }
 }

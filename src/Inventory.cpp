@@ -23,7 +23,7 @@ bool Inventory::SetItem(Item* item, int index)
     std::unique_lock<std::mutex> lock(m_mutex);
     if(index == -1)
     {
-        if(firstFreeSlot > 0)
+        if(firstFreeSlot >= 0)
         {
             m_items[firstFreeSlot] = item;
             lock.unlock();
@@ -39,6 +39,11 @@ bool Inventory::SetItem(Item* item, int index)
             m_items[index] = item;
             if(item == nullptr && index < firstFreeSlot)
                 firstFreeSlot = index;
+            else if(index == firstFreeSlot)
+            {
+                lock.unlock();
+                FindNextFreeSlot();
+            }
 
             return true;
         }
@@ -67,7 +72,11 @@ bool Inventory::HandleEvent(const sf::Event& event)
         if(event.key.code == sf::Keyboard::Tab)
         {
             m_isOpen = !m_isOpen;
-            if(!m_isOpen) m_slotHovered = -1;
+            if(!m_isOpen)
+            {
+                m_slotHovered = -1;
+                m_slotInHand = -1;
+            }
             return true;
         }
     }
@@ -104,6 +113,39 @@ bool Inventory::HandleEvent(const sf::Event& event)
                 }
 
                 m_slotHovered = slotIndexX + slotIndexY * INVENTORY_COLUMNS;
+            }
+        }
+    }
+    else if(event.type == sf::Event::MouseButtonPressed)
+    {
+        if(m_isOpen && m_slotHovered != -1)
+        {
+            std::unique_lock<std::mutex> lock(m_mutex);
+
+            if(m_slotHovered == m_slotInHand)
+            {
+                m_slotInHand = -1;
+                return true;
+            }
+            else if(m_items[m_slotHovered] != nullptr)
+            {
+                if(m_slotInHand == -1)
+                {
+                    m_slotInHand = m_slotHovered;
+                    return true;
+                }
+                else
+                {
+                    std::swap(m_items[m_slotHovered], m_items[m_slotInHand]);
+                    return true;
+                }
+            }
+            else if(m_items[m_slotHovered] == nullptr && m_slotInHand != -1)
+            {
+                m_items[m_slotHovered] = m_items[m_slotInHand];
+                m_items[m_slotInHand] = nullptr;
+                m_slotInHand = -1;
+                return true;
             }
         }
     }
@@ -196,19 +238,51 @@ void Inventory::Render(sf::RenderWindow& window)
         {
             int index = y * INVENTORY_COLUMNS + x;
             Item* item = m_items[index];
+
             if(item != nullptr)
             {
                 TextureRegistry::ResourceHandle texture = item->m_texture;
                 sf::Sprite sprite = sf::Sprite(texture);
-                sprite.setPosition({
-                    m_inventory.getPosition().x + m_computedOffset + x * (m_slotSize + m_computedMargin),
-                    m_inventory.getPosition().y + m_computedOffset + y * (m_slotSize + m_computedMargin)
-                });
+                FontRegistry::ResourceHandle font = Application::GetInstance().GetFontRegistry().GetResource("default.ttf");
+                sf::Text text(font, std::to_string(item->m_count));
+
                 sprite.setScale({
                     m_slotSize / texture->getSize().x,
                     m_slotSize / texture->getSize().y
                 });
+
+                text.setOrigin({
+                    text.getLocalBounds().width + text.getLocalBounds().left * 2,
+                    text.getLocalBounds().height + text.getLocalBounds().top * 2
+                });
+
+                SPDLOG_INFO("x: {}, y: {}", text.getOrigin().x, text.getOrigin().y);
+
+                if(m_slotInHand == index)
+                {
+                    sprite.setPosition({
+                        static_cast<float>(sf::Mouse::getPosition(window).x) - m_slotSize / 2,
+                        static_cast<float>(sf::Mouse::getPosition(window).y) - m_slotSize / 2
+                    });
+                    text.setPosition({
+                        static_cast<float>(sf::Mouse::getPosition(window).x) + m_slotSize * 0.45f,
+                        static_cast<float>(sf::Mouse::getPosition(window).y) + m_slotSize * 0.45f
+                    });
+                }
+                else
+                {
+                    sprite.setPosition({
+                        m_inventory.getPosition().x + m_computedOffset + x * (m_slotSize + m_computedMargin),
+                        m_inventory.getPosition().y + m_computedOffset + y * (m_slotSize + m_computedMargin)
+                    });
+                    text.setPosition({
+                        m_inventory.getPosition().x + m_computedOffset + x * (m_slotSize + m_computedMargin) + m_slotSize * 0.95f,
+                        m_inventory.getPosition().y + m_computedOffset + y * (m_slotSize + m_computedMargin) + m_slotSize * 0.95f
+                    });
+                }
+
                 window.draw(sprite);
+                window.draw(text);
             }
         }
     }

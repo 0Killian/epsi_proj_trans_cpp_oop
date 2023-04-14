@@ -6,12 +6,16 @@
 #include <GameGrid.h>
 #include <SFML/Window/Joystick.hpp>
 #include <Tiles.h>
+#include <items/WateringCan.h>
+#include <items/Hoe.h>
+#include <items/Carrot.h>
 
 void Player::Init()
 {
 #ifdef DEBUG
     assert(m_gameGrid != nullptr);
     assert(m_hotbar != nullptr);
+    assert(m_inventory != nullptr);
 #endif
 
     m_texture = Application::GetInstance().GetTextureRegistry().GetResource("player.png");
@@ -254,13 +258,12 @@ void Player::TileArea(sf::IntRect area)
             auto& tile = m_gameGrid->GetTile(x, y);
             if(tile->GetType() == TileType::Ground)
             {
-                m_gameGrid->SetTile(x, y, std::make_unique<SoilTile>(
-                    SoilTile::TEXTURE_ALL_CONNECTED,
+                uint32_t textureIndex = tile->GetTextureIndex(0);
+                m_gameGrid->GetTile(x, y) = std::make_unique<SoilTile>(
+                    std::vector<uint32_t>{ textureIndex, SoilTile::TEXTURE_NONE_CONNECTED },
                     sf::Vector2f(x, y),
-                    false,
-                    nullptr,
-                    0
-                ));
+                    false
+                );
             }
         }
     }
@@ -276,4 +279,55 @@ sf::Vector2i Player::GetTilePosition() const
     };
 
     return position;
+}
+
+std::unique_ptr<GameGrid::Tile>& Player::GetTileAtPosition() const
+{
+    return m_gameGrid->GetTile(GetTilePosition().x, GetTilePosition().y);
+}
+
+void Player::AddItem(ItemId id, int count)
+{
+    for(int i = 0; i < Inventory::TOTAL_SLOT_COUNT; i++)
+    {
+        if(m_inventory->GetItem(i) != nullptr
+        && m_inventory->GetItem(i)->GetId() == id
+        && m_inventory->GetItem(i)->GetCount() < m_inventory->GetItem(i)->GetStackSize())
+        {
+            m_inventory->GetItem(i)->Add(count);
+            return;
+        }
+    }
+
+    Item* item;
+    switch(id)
+    {
+    case ItemId::HOE:
+        item = new Hoe();
+        break;
+
+    case ItemId::WATERING_CAN:
+        item = new WateringCan();
+        break;
+
+    case ItemId::CARROT:
+        item = new Carrot();
+        break;
+    }
+
+    item->Add(count-1);
+
+    m_inventory->SetItem(item, -1);
+}
+
+void Player::RemoveItem(Item *item)
+{
+    for(int i = 0; i < Inventory::TOTAL_SLOT_COUNT; i++)
+    {
+        if(m_inventory->GetItem(i) == item)
+        {
+            m_inventory->SetItem(nullptr, i);
+            return;
+        }
+    }
 }

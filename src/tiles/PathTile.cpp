@@ -3,7 +3,11 @@
 //
 #include <Tiles.h>
 
-PathTile::PathTile(uint64_t textureIndex, sf::Vector2f position, bool collidable) : Tile(textureIndex, position, collidable)
+PathTile::PathTile(RawGameTile* tile, sf::Vector2f position) :
+        Tile(std::vector<uint32_t>(
+                reinterpret_cast<uint32_t*>(tile->data),
+                reinterpret_cast<uint32_t*>(tile->data) + tile->texturesCount
+        ), position, tile->collidable)
 {
 
 }

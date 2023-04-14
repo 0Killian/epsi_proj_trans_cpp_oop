@@ -308,4 +308,5 @@ private:
 namespace {
     using namespace sf;
     DEFINE_REGISTRY("assets/textures/", Texture)
+    DEFINE_REGISTRY("assets/fonts/", Font)
 }

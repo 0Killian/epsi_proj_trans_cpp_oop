@@ -49,6 +49,7 @@ private:
     int firstFreeSlot = 0;
     bool m_isOpen = false;
     int m_slotHovered = -1;
+    int m_slotInHand = -1;
 
     float m_slotSize;
     sf::Vector2f m_inventorySize;

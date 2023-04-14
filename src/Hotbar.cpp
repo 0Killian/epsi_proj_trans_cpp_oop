@@ -77,9 +77,10 @@ bool Hotbar::HandleEvent(const sf::Event& event)
 
 void Hotbar::SelectSlot(int slot)
 {
-    Item* item = m_inventory->GetHoveredItem();
-    if(item != nullptr)
+
+    if(m_inventory->GetHoveredSlot() != -1)
     {
+        Item* item = m_inventory->GetHoveredItem();
         Item* currentItem = m_inventory->GetItem(Inventory::INVENTORY_SLOT_COUNT + slot);
         m_inventory->SetItem(item, Inventory::INVENTORY_SLOT_COUNT + slot);
         m_inventory->SetItem(currentItem, m_inventory->GetHoveredSlot());

@@ -3,7 +3,11 @@
 //
 #include <Tiles.h>
 
-PassagePointTile::PassagePointTile(uint64_t textureIndex, sf::Vector2f position, bool collidable, const uint8_t* data, uint32_t size) : Tile(textureIndex, position, collidable)
+PassagePointTile::PassagePointTile(RawGameTile* tile, sf::Vector2f position) :
+        Tile(std::vector<uint32_t>(
+                reinterpret_cast<uint32_t*>(tile->data),
+                reinterpret_cast<uint32_t*>(tile->data) + tile->texturesCount
+        ), position, tile->collidable)
 {
 
 }

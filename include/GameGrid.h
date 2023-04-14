@@ -10,7 +10,8 @@
 #include <utility>
 #include "ResourceRegistry.h"
 #include "GameObject.h"
-#include "Player.h"
+
+class Player;
 
 // The tile types the game supports (each type is associated to a class)
 enum class TileType : uint8_t
@@ -20,6 +21,38 @@ enum class TileType : uint8_t
     Path = 2,
     Soil = 3
 };
+
+// We need to pack the structures to tell to the compiler to not add any padding
+#pragma pack(push, 1)
+// The header of the file
+struct RawGameGrid
+{
+    uint32_t width;
+    uint32_t height;
+    uint32_t tilesetPathSize; // size of the tilemaps path
+    uint32_t tilesSize; // total size of tiles
+    uint32_t entitiesSize; // total size of entities
+    uint8_t data[];
+};
+
+// The tile structure in the file
+struct RawGameTile
+{
+    TileType type;
+    uint32_t size; // size of total structure
+    uint32_t texturesCount; // number of textures in data
+    bool collidable;
+    uint8_t data[]; // custom data
+};
+
+// The entity structure in the file (TODO)
+struct RawGameEntity
+{
+    uint32_t size; // size of total structure
+    uint32_t textureIndex; // offset in texture names
+    uint8_t data[]; // custom data
+};
+#pragma pack(pop)
 
 ////////////////////////////////////////////////////////////
 /// \brief  The grid system of the game
@@ -48,17 +81,24 @@ public:
     /// The file needs to be in the HTF format described here :
     ///
     /// Header:
-    /// -----------------------------------------------------------------------------------------------------------------
-    /// | width    | height   | tilesetPathSize | tilesSize | entitiesSize | tilesetPath     | tiles     | entities     |
-    /// -----------------------------------------------------------------------------------------------------------------
-    /// | uint32_t | uint32_t | uint32_t        | uint32_t  | uint32_t     | char[]          | Tile[]    | Entity[]     |
-    /// -----------------------------------------------------------------------------------------------------------------
-    /// | 4        | 4        | 4               | 4         | 4            | tileSetPathSize | tilesSize | entitiesSize |
-    /// -----------------------------------------------------------------------------------------------------------------
+    /// --------------------------------------------------------------------------------------
+    /// | width    | height   | tilesetPathSize | tilesSize | entitiesSize | tilesetPath     |
+    /// --------------------------------------------------------------------------------------
+    /// | uint32_t | uint32_t | uint32_t        | uint32_t  | uint32_t     | char[]          |
+    /// --------------------------------------------------------------------------------------
+    /// | 4        | 4        | 4               | 4         | 4            | tileSetPathSize |
+    /// --------------------------------------------------------------------------------------
+    /// ----------------------------
+    /// | tiles     | entities     |
+    /// ----------------------------
+    /// | Tile[][]  | Entity[]     |
+    /// ----------------------------
+    /// | tilesSize | entitiesSize |
+    /// ----------------------------
     ///
     /// Tile:
     /// ---------------------------------------------------------------
-    /// | type     | size     | textureIndex | collidable | data      |
+    /// | type     | size     | textureCount | collidable | data      |
     /// ---------------------------------------------------------------
     /// | uint8_t  | uint32_t | uint32_t     | bool       | uint8_t[] |
     /// ---------------------------------------------------------------
@@ -133,40 +173,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     inline void SetPlayer(const std::shared_ptr<Player>& player) { m_player = player; }
 
-private:
-// We need to pack the structures to tell to the compiler to not add any padding
-#pragma pack(push, 1)
-    // The header of the file
-    struct RawGameGrid
-    {
-        uint32_t width;
-        uint32_t height;
-        uint32_t tilesetPathSize; // size of the tilemaps path
-        uint32_t tilesSize; // total size of tiles
-        uint32_t entitiesSize; // total size of entities
-        uint8_t data[];
-    };
-
-    // The tile structure in the file
-    struct RawGameTile
-    {
-        TileType type;
-        uint32_t size; // size of total structure
-        uint32_t textureIndex; // offset in texture names
-        bool collidable;
-        uint8_t data[]; // custom data
-    };
-
-    // The entity structure in the file (TODO)
-    struct RawGameEntity
-    {
-        uint32_t size; // size of total structure
-        uint32_t textureIndex; // offset in texture names
-        uint8_t data[]; // custom data
-    };
-#pragma pack(pop)
-
-public:
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  A class representing a tile
     ///
@@ -179,8 +185,8 @@ public:
     class Tile
     {
     public:
-        explicit Tile(uint64_t textureIndex, sf::Vector2f position, bool collidable)
-            : m_textureIndex(textureIndex), m_position(position), m_collidable(collidable)
+        explicit Tile(const std::vector<uint32_t>& textureIndices, sf::Vector2f position, bool collidable)
+            : m_textureIndices(textureIndices), m_position(position), m_collidable(collidable)
         {}
 
         Tile(const Tile& other) = delete;
@@ -192,6 +198,7 @@ public:
         [[nodiscard]] virtual TileType GetType() const = 0;
 
         [[nodiscard]] inline sf::FloatRect GetBoundingBox() const { return {m_position * TILE_SIZE, sf::Vector2f(TILE_SIZE, TILE_SIZE)}; }
+        [[nodiscard]] inline uint32_t GetTextureIndex(uint64_t index) const { return m_textureIndices[index]; }
 
     protected:
         friend GameGrid;
@@ -206,21 +213,9 @@ public:
         static std::unique_ptr<Tile> ParseRawTile(RawGameTile* rawTile, sf::Vector2f position);
 
         sf::Vector2f m_position;
-        uint64_t m_textureIndex;
+        std::vector<uint32_t> m_textureIndices;
         bool m_collidable;
     };
-
-    ////////////////////////////////////////////////////////////////////////////
-    /// \brief  Set the tile at the given position
-    ///
-    /// \param x the x position
-    /// \param y the y position
-    /// \param tile the tile to set
-    ///
-    /// \see Tile
-    ///
-    ////////////////////////////////////////////////////////////////////////////
-    void SetTile(int x, int y, std::unique_ptr<Tile> tile);
 
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  Get the tile at the given position
@@ -232,9 +227,9 @@ public:
     /// \see Tile
     ///
     ////////////////////////////////////////////////////////////////////////////
-    [[nodiscard]] const std::unique_ptr<Tile>& GetTile(int x, int y) const;
+    [[nodiscard]] std::unique_ptr<Tile>& GetTile(int x, int y);
 
-    void SetTextureIndexAtTile(int x, int y, uint64_t textureIndex);
+    void SetTextureIndexAtTile(int x, int y, uint64_t layer, uint32_t textureIndex);
 
     [[nodiscard]] uint32_t GetWidth() const { return m_width; }
     [[nodiscard]] uint32_t GetHeight() const { return m_height; }
@@ -245,17 +240,6 @@ public:
 
 protected:
     friend Tile;
-
-    ////////////////////////////////////////////////////////////////////////////
-    /// \brief  Triggers the vertex array update
-    ///
-    /// This function triggers the vertex array update, it will be updated on the
-    /// next frame.
-    ///
-    /// \see CreateVertexArray
-    ///
-    ////////////////////////////////////////////////////////////////////////////
-    inline void TriggerVertexArrayUpdate() { m_shouldUpdateVertexArray = true; }
 
 private:
     ////////////////////////////////////////////////////////////////////////////
@@ -281,8 +265,9 @@ private:
     uint32_t m_height = 0;
 
     sf::VertexArray m_vertexArray;
-    std::atomic_bool m_shouldUpdateVertexArray = true;
-    std::mutex m_vertexArrayMutex;
+    sf::RenderStates m_renderState;
+    sf::View m_renderView;
+    sf::RenderTexture m_renderTexture;
 
     float m_zoomFactor = 1.0f;
     float m_zoomDelta = 0.0f;
