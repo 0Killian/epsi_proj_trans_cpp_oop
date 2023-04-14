@@ -7,6 +7,17 @@
 #include <GameObject.h>
 #include "Inventory.h"
 
+////////////////////////////////////////////////////////////////////////////
+/// \brief  The hotbar of the player
+///
+/// This object is a GUI object used to render and use items contained in the
+/// player inventory
+///
+/// \see GameObject
+/// \see Inventory
+/// \see Item
+///
+////////////////////////////////////////////////////////////////////////////
 class Hotbar : public GameObject
 {
 public:
@@ -16,6 +27,14 @@ public:
     void Render(sf::RenderWindow& window) override;
     bool HandleEvent(const sf::Event& event) override;
 
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  Uses the item selected in the hotbar
+    ///
+    /// If the select slot does not contain an item, nothing happens.
+    ///
+    /// \param player a reference to the player using the item
+    ///
+    ////////////////////////////////////////////////////////////////////////////
     void UseSelected(class Player& player);
 
 private:
@@ -25,7 +44,24 @@ private:
     static constexpr int HOTBAR_SLOT_MARGIN = 5;
     static constexpr int HOTBAR_SLOT_SIZE = 32;
 
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  An internal function used when the hotbar needs to be resized
+    ///
+    /// This function will compute the size and position of the hotbar and its
+    /// components, based on the window size.
+    ///
+    ////////////////////////////////////////////////////////////////////////////
     void Resize();
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  An internal function called to select a slot
+    ///
+    /// This function has two behaviors:
+    /// - The inventory is opened: the currently hovered item is swapped with the
+    ///   item on the slot
+    /// - The inventory is not opened: the slot is selected
+    ///
+    ////////////////////////////////////////////////////////////////////////////
     void SelectSlot(int slot);
 
     std::shared_ptr<Inventory> m_inventory;

@@ -23,9 +23,9 @@ bool Inventory::SetItem(Item* item, int index)
     std::unique_lock<std::mutex> lock(m_mutex);
     if(index == -1)
     {
-        if(firstFreeSlot >= 0)
+        if(m_firstFreeSlot >= 0)
         {
-            m_items[firstFreeSlot] = item;
+            m_items[m_firstFreeSlot] = item;
             lock.unlock();
             FindNextFreeSlot();
             return true;
@@ -37,9 +37,9 @@ bool Inventory::SetItem(Item* item, int index)
         if(index >= 0 && index < TOTAL_SLOT_COUNT)
         {
             m_items[index] = item;
-            if(item == nullptr && index < firstFreeSlot)
-                firstFreeSlot = index;
-            else if(index == firstFreeSlot)
+            if(item == nullptr && index < m_firstFreeSlot)
+                m_firstFreeSlot = index;
+            else if(index == m_firstFreeSlot)
             {
                 lock.unlock();
                 FindNextFreeSlot();
@@ -58,11 +58,11 @@ void Inventory::FindNextFreeSlot()
     {
         if(m_items[i] == nullptr)
         {
-            firstFreeSlot = i;
+            m_firstFreeSlot = i;
             return;
         }
     }
-    firstFreeSlot = -1;
+    m_firstFreeSlot = -1;
 }
 
 bool Inventory::HandleEvent(const sf::Event& event)

@@ -63,10 +63,14 @@ void Application::RunMainLoop()
 
     // Terminate the thread pool
     m_threadPool.Terminate();
+
+    m_threadPool.RethrowExceptions();
 }
 
 void Application::Update(float deltaTime)
 {
+    m_threadPool.RethrowExceptions();
+
     // Event pump
     sf::Event event{};
     while(m_window.pollEvent(event))

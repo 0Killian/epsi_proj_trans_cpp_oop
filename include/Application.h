@@ -19,8 +19,6 @@
 class Application
 {
 public:
-    typedef std::function<void(sf::Event&, void*)> EventListener;
-
     Application(const Application&) = delete;
     Application(Application&&) = delete;
     Application& operator=(const Application&) = delete;
@@ -55,7 +53,6 @@ public:
     ////////////////////////////////////////////////////////////
     /// \brief  Returns the texture registry
     ///
-    ///
     /// The texture registry is used to load and store textures.
     ///
     /// \return A reference to the texture registry
@@ -68,8 +65,7 @@ public:
     ////////////////////////////////////////////////////////////
     /// \brief  Returns the font registry
     ///
-    ///
-    /// The font registry is used to load and store font.
+    /// The font registry is used to load and store fonts.
     ///
     /// \return A reference to the font registry
     ///
@@ -79,7 +75,7 @@ public:
     [[nodiscard]] inline FontRegistry& GetFontRegistry() { return m_fontRegistry; }
 
     ////////////////////////////////////////////////////////////
-    /// \brief  Returns the the thread pool
+    /// \brief  Returns the thread pool
     ///
     /// The thread pool is used to execute tasks asynchronously.
     ///
@@ -90,28 +86,9 @@ public:
     ////////////////////////////////////////////////////////////
     [[nodiscard]] inline ThreadPool& GetThreadPool() { return m_threadPool; }
 
-    ////////////////////////////////////////////////////////////
-    /// \brief  Returns the window width
-    ///
-    /// \return The window width
-    ///
-    ////////////////////////////////////////////////////////////
+
     [[nodiscard]] inline uint32_t GetWindowWidth() const { return m_windowWidth; }
-
-    ////////////////////////////////////////////////////////////
-    /// \brief  Returns the window height
-    ///
-    /// \return The window height
-    ///
-    ////////////////////////////////////////////////////////////
     [[nodiscard]] inline uint32_t GetWindowHeight() const { return m_windowHeight; }
-
-    ////////////////////////////////////////////////////////////
-    /// \brief  Returns the aspect ratio of the window
-    ///
-    /// \return The aspect ratio of the window
-    ///
-    ////////////////////////////////////////////////////////////
     [[nodiscard]] inline float GetAspectRatio() const { return static_cast<float>(m_windowWidth) / static_cast<float>(m_windowHeight); }
 
     static constexpr std::string_view WINDOW_TITLE = "Harvest Haven";
@@ -142,7 +119,7 @@ protected:
     /// \brief  Adds a context to the list of contexts
     ///
     /// This function is used to add a context to the list of contexts
-    /// and shares the context with the main context.
+    /// and to share its resource with the main context
     ///
     /// \param context The context to add
     ///
@@ -194,6 +171,7 @@ private:
     static constexpr uint32_t DEFAULT_WINDOW_WIDTH = 1280;
     static constexpr uint32_t DEFAULT_WINDOW_HEIGHT = 720;
 
+
     static std::unique_ptr<Application> s_instance;
 
     uint32_t m_windowWidth = DEFAULT_WINDOW_WIDTH;
@@ -218,5 +196,6 @@ private:
 #else
 #error Not Supported!
 #endif
+
     std::mutex m_threadsContextMutex;
 };
