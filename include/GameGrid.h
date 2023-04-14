@@ -58,10 +58,9 @@ struct RawGameEntity
 /// \brief  The grid system of the game
 ///
 /// This class is responsible for the grid system of the game.
-/// Using factory functions, like ReadFromFile, it can load
-/// a tilemap and a tileset, and use them to render a game grid
-/// efficently using a vertex array (it is only built when the
-/// map is modified).
+/// It can load a tilemap and a tileset, and use them to render
+/// a game grid efficently using a vertex array and a render
+/// texture.
 /// This class is also responsible for the camera, using the
 /// camera position and zoom factor, it can render the grid
 /// at the right position and scale.
@@ -119,7 +118,7 @@ public:
     /// \brief  Initializes the game grid using the path given in the constructor
     ///
     /// This function initializes the game grid, it loads the tileset and the
-    /// tilemap, and creates the vertex array.
+    /// tilemap, and creates the vertex array and render texture.
     ///
     /// \see CreateVertexArray
     ///
@@ -129,11 +128,14 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  Updates the game grid
     ///
-    /// This function updates the game grid, it checks if the vertex array needs
-    /// to be rebuilt, and if so, it rebuilds it.
+    /// This function updates the game grid, rebuilds the vertex array, only
+    /// rendering the visible tiles. It is also responsible for checking collisions
+    /// between the player and the collidable tiles as well as the outer bounds of
+    /// the map, and setting the view according to the player position and zoom.
     ///
     /// \param deltaTime the time since the last frame
     ///
+    /// \see DynamicRectangleCollision
     /// \see CreateVertexArray
     /// \see GameObject::Update
     ///
@@ -143,6 +145,12 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  Renders the game grid
     ///
+    /// This function first renders the vertex array to the render texture, and
+    /// then renders it as a sprite with the view set to the calculated view in
+    /// Update(). This is done to avoid artifacts, as upscaling directly the
+    /// vertex array will cause blank horieontal lines to appear between tiles.
+    /// To avoid this, we can also render it using a custom shader.
+    ///
     /// \param window the window to render to
     ///
     /// \see GameObject::Render
@@ -151,7 +159,7 @@ public:
     void Render(sf::RenderWindow& window) override;
 
     ////////////////////////////////////////////////////////////////////////////
-    /// \brief  Handles the wheel scroll event
+    /// \brief  Handles the events
     ///
     /// The game grid is responsible for the camera, so it handles the wheel
     /// scroll event to zoom in and out.
@@ -165,7 +173,7 @@ public:
     bool HandleEvent(const sf::Event& event) override;
 
     ////////////////////////////////////////////////////////////////////////////
-    /// \brief  Set the player
+    /// \brief  Sets the player
     ///
     /// \param player the player
     ///
@@ -177,7 +185,7 @@ public:
     /// \brief  A class representing a tile
     ///
     /// This class is the base class for all tiles. It is responsible for
-    /// the texture index of the tile, and the parsing of the raw tile
+    /// the texture indices of the tile, and the parsing of the raw tile
     /// structure.
     ///
     /// \see Tile::ParseRawTile
@@ -218,7 +226,7 @@ public:
     };
 
     ////////////////////////////////////////////////////////////////////////////
-    /// \brief  Get the tile at the given position
+    /// \brief  Get a mutable reference to the tile at the given position
     ///
     /// \param x the x position
     /// \param y the y position
@@ -229,12 +237,39 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     [[nodiscard]] std::unique_ptr<Tile>& GetTile(int x, int y);
 
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  Sets the texture index of a tile's layer
+    ///
+    /// This function must be used with caution: the layer must be between 0 and
+    /// the tile's layer count, otherwise the function will throw an exception.
+    ///
+    /// \param x the x position
+    /// \param y the y position
+    /// \param layer the layer of the tile
+    /// \param textureIndex the new texture index
+    /// \return the tile at the given position
+    ///
+    /// \see Tile
+    ///
+    ////////////////////////////////////////////////////////////////////////////
     void SetTextureIndexAtTile(int x, int y, uint64_t layer, uint32_t textureIndex);
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief  Updates an area of connected soils
+    ///
+    /// When a new soil tile is added or an existing one is deleted, we need to
+    /// call this function to update the neighbouring soil tile's textures.
+    ///
+    /// \param pos the position of the updated tile
+    ///
+    /// \see Tile
+    ///
+    ////////////////////////////////////////////////////////////////////////////
+    void UpdateSoilArea(sf::Vector2f pos);
 
     [[nodiscard]] uint32_t GetWidth() const { return m_width; }
     [[nodiscard]] uint32_t GetHeight() const { return m_height; }
-
-    void UpdateSoilArea(sf::Vector2f pos);
 
     static constexpr float TILE_SIZE = 32.0f;
 
@@ -245,8 +280,8 @@ private:
     ////////////////////////////////////////////////////////////////////////////
     /// \brief  Creates a vertex array from the tilemap
     ///
-    /// This function needs to be called when the tilemap is modified, it will
-    /// rebuild the vertex array.
+    /// This function needs to be called each frame, because it only renders the
+    /// visible tiles at a given frame
     ///
     /// \return a vertex array
     ///

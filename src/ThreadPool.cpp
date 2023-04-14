@@ -69,6 +69,7 @@ void ThreadPool::Init()
                 std::unique_lock<std::mutex> lock(m_exceptionMutex);
                 m_exceptions.push_back(std::current_exception());
             }
+
         });
 
         // Wait for the thread to be ready

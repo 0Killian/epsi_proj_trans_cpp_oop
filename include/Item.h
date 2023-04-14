@@ -6,6 +6,7 @@
 #include <GameObject.h>
 #include "ResourceRegistry.h"
 
+// The ID of an item
 enum ItemId : uint16_t
 {
     HOE,
@@ -13,6 +14,11 @@ enum ItemId : uint16_t
     CARROT
 };
 
+////////////////////////////////////////////////////////////////////////////
+/// \brief  A base class for an item stored in the player's inventory
+///
+///
+////////////////////////////////////////////////////////////////////////////
 class Item
 {
 public:

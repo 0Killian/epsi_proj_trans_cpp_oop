@@ -13,6 +13,7 @@
 
 class GameGrid;
 
+// The orientation of the player
 enum Orientation : int {
     UP = 1,
     RIGHT = 2,
@@ -20,7 +21,14 @@ enum Orientation : int {
     LEFT = 3
 };
 
-class Player : public GameObject{
+////////////////////////////////////////////////////////////////////////////
+/// \brief  The player object
+///
+/// This object stores and control the player state.
+///
+////////////////////////////////////////////////////////////////////////////
+class Player : public GameObject
+{
 public:
     void Init() override;
     void Update(float deltaTime) override;

@@ -6,6 +6,15 @@
 
 #include "Item.h"
 
+////////////////////////////////////////////////////////////
+/// \brief  A watering can item
+///
+/// This item is used to water a planted seed. This is needed
+/// for it to grow.
+///
+/// \see SoilTile
+///
+////////////////////////////////////////////////////////////
 class WateringCan : public Item
 {
 public:

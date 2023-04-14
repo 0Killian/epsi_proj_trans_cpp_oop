@@ -6,6 +6,15 @@
 
 #include "Item.h"
 
+////////////////////////////////////////////////////////////
+/// \brief  A hoe item
+///
+/// This tool is used to transform a ground tile into a tiled
+/// soil tile, as well as picking up mature plants.
+///
+/// \see SoilTile
+///
+////////////////////////////////////////////////////////////
 class Hoe : public Item
 {
 public:
