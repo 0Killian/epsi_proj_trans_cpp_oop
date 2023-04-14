@@ -9,6 +9,7 @@
 #include "ResourceRegistry.h"
 #include "Inventory.h"
 #include "Hotbar.h"
+#include "GameGrid.h"
 
 class GameGrid;
 
@@ -31,11 +32,16 @@ public:
 
     inline void SetGameGrid(std::shared_ptr<GameGrid> gameGrid) { m_gameGrid = std::move(gameGrid); }
     inline void SetHotbar(std::shared_ptr<Hotbar> hotbar) { m_hotbar = std::move(hotbar); }
+    inline void SetInventory(std::shared_ptr<Inventory> inventory) { m_inventory = std::move(inventory); }
+
+    void AddItem(ItemId id, int count = 1);
+    void RemoveItem(Item* item);
 
     [[nodiscard]] inline sf::Vector2f GetPosition() const { return m_position; }
     [[nodiscard]] sf::Vector2i GetTilePosition() const;
     [[nodiscard]] inline sf::Vector2f GetMovement() const { return m_movement; }
     [[nodiscard]] sf::Rect<float> GetBoundingBox() const;
+    [[nodiscard]] std::unique_ptr<GameGrid::Tile>& GetTileAtPosition() const;
 
     void TileArea(sf::IntRect area);
 
@@ -62,6 +68,7 @@ private:
 
     std::shared_ptr<GameGrid> m_gameGrid;
     std::shared_ptr<Hotbar> m_hotbar;
+    std::shared_ptr<Inventory> m_inventory;
 
     bool m_shouldUseItem = false;
     float m_itemCooldown = 0;

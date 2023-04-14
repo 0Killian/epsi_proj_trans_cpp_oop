@@ -66,6 +66,19 @@ public:
     [[nodiscard]] inline TextureRegistry& GetTextureRegistry() { return m_textureRegistry; }
 
     ////////////////////////////////////////////////////////////
+    /// \brief  Returns the font registry
+    ///
+    ///
+    /// The font registry is used to load and store font.
+    ///
+    /// \return A reference to the font registry
+    ///
+    /// \see FontRegistry
+    ///
+    ////////////////////////////////////////////////////////////
+    [[nodiscard]] inline FontRegistry& GetFontRegistry() { return m_fontRegistry; }
+
+    ////////////////////////////////////////////////////////////
     /// \brief  Returns the the thread pool
     ///
     /// The thread pool is used to execute tasks asynchronously.
@@ -194,6 +207,7 @@ private:
     sf::Clock m_clock;
 
     TextureRegistry m_textureRegistry;
+    FontRegistry m_fontRegistry;
     ThreadPool m_threadPool;
 
     std::unique_ptr<Scene> m_currentScene;

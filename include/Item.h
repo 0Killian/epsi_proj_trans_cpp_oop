@@ -8,7 +8,9 @@
 
 enum ItemId : uint16_t
 {
-    APPLE
+    HOE,
+    WATERING_CAN,
+    CARROT
 };
 
 class Item
@@ -17,6 +19,9 @@ public:
     [[nodiscard]] inline std::string GetName() const { return m_name; }
     [[nodiscard]] inline int GetStackSize() const { return m_stackSize; }
     [[nodiscard]] inline int GetCount() const { return m_count; }
+    [[nodiscard]] inline ItemId GetId() const { return m_id; }
+
+    inline void Add(int count) { m_count += count; }
 
     virtual void OnUse(class Player& player) = 0;
 
@@ -28,8 +33,8 @@ protected:
 
     ItemId m_id;
     std::string m_name;
-    int m_stackSize = 0;
-    int m_count = 0;
+    int m_stackSize = 1;
+    int m_count = 1;
     TextureRegistry::ResourceHandle m_texture;
 };
 

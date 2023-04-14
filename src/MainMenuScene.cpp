@@ -1,7 +1,8 @@
 //
 // Created by Killian and Alban on 16/03/2023.
 //
-#include <items/Apple.h>
+#include <items/Hoe.h>
+#include <items/WateringCan.h>
 #include "MainMenuScene.h"
 #include "Application.h"
 #include "GameGrid.h"
@@ -72,6 +73,7 @@ void MainMenuScene::Init()
         m_guiLayer->AddGUIObject(m_hotbar);
         m_player->SetGameGrid(m_testGameGrid);
         m_player->SetHotbar(m_hotbar);
+        m_player->SetInventory(m_inventory);
 
         for (int i = 0; i < m_gameObjects.size(); i++)
         {
@@ -81,7 +83,8 @@ void MainMenuScene::Init()
             m_loadingScreenSprite.setTextureRect(sf::IntRect({0, 1080 * index}, {1920, 1080}));
         }
 
-        m_inventory->SetItem(new Apple(), 0);
+        m_inventory->SetItem(new Hoe(), -1);
+        m_inventory->SetItem(new WateringCan(), -1);
 
         m_loaded = true;
     });

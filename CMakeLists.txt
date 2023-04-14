@@ -22,7 +22,7 @@ add_executable(HarvestHaven
         src/Item.cpp
         src/Inventory.cpp
         src/CollisionUtils.cpp
-        src/Hotbar.cpp src/items/Apple.cpp)
+        src/Hotbar.cpp src/items/Hoe.cpp src/items/WateringCan.cpp src/items/Carrot.cpp)
 
 
 target_include_directories(HarvestHaven PRIVATE include)

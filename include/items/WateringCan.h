@@ -6,10 +6,10 @@
 
 #include "Item.h"
 
-class Apple : public Item
+class WateringCan : public Item
 {
 public:
-    Apple();
+    WateringCan();
 
     void OnUse(Player& player) override;
 };
