@@ -22,7 +22,10 @@ add_executable(HarvestHaven
         src/Item.cpp
         src/Inventory.cpp
         src/CollisionUtils.cpp
-        src/Hotbar.cpp src/items/Hoe.cpp src/items/WateringCan.cpp src/items/Carrot.cpp)
+        src/Hotbar.cpp
+        src/items/Hoe.cpp
+        src/items/WateringCan.cpp
+        src/items/Carrot.cpp)
 
 
 target_include_directories(HarvestHaven PRIVATE include)
@@ -43,5 +46,5 @@ endif()
 
 install(TARGETS HarvestHaven)
 
-add_executable(GenerateTilemap scripts/GenerateTilemap.cpp)
+add_executable(GenerateTilemap scripts/GenerateTilemap.cpp include/Window.h)
 target_compile_features(GenerateTilemap PRIVATE cxx_std_23)
