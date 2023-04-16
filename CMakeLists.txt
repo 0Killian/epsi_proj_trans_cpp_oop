@@ -30,7 +30,9 @@ add_executable(HarvestHaven
         src/renderers/vulkan/VulkanRenderer.cpp
         src/renderers/directx/DirectXRenderer.cpp
         src/renderers/metal/MetalRenderer.cpp
-        src/renderers/opengl/OpenGLRenderer.cpp)
+        src/renderers/opengl/OpenGLRenderer.cpp
+        src/glad.cpp
+        src/glad_wgl.cpp)
 
 
 target_include_directories(HarvestHaven PRIVATE include)

@@ -39,6 +39,18 @@ public:
     [[nodiscard]] inline std::string_view GetTitle() const { return m_title; };
     [[nodiscard]] inline bool IsVSync() const { return m_vsync; }
 
+protected:
+    friend class Renderer;
+
+#ifdef PLATFORM_WIN32
+    [[nodiscard]] inline HWND GetHandle() const { return m_windowHandle; }
+#elif PLATFORM_LINUX
+    [[nodiscard]] inline Display* GetDisplay() const { return m_display; }
+    [[nodiscard]] inline Window GetHandle() const { return m_windowHandle; }
+#elif PLATFORM_MACOS
+#error "MacOS is not supported yet"
+#endif
+
 private:
 #ifdef PLATFORM_WIN32
     HWND m_windowHandle;

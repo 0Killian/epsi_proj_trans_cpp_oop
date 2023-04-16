@@ -16,4 +16,14 @@ void DirectXRenderer::SetVSync(bool vsync)
 
 }
 
+void DirectXRenderer::Clear(Color color)
+{
+
+}
+
+void DirectXRenderer::SwapBuffers()
+{
+
+}
+
 #endif

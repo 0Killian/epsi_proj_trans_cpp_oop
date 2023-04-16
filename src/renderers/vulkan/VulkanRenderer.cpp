@@ -14,3 +14,13 @@ void VulkanRenderer::SetVSync(bool vsync)
 {
 
 }
+
+void VulkanRenderer::Clear(Color color)
+{
+
+}
+
+void VulkanRenderer::SwapBuffers()
+{
+
+}

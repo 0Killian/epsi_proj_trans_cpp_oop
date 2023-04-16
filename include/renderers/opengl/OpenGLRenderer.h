@@ -9,7 +9,21 @@
 class OpenGLRenderer : public Renderer
 {
 public:
-    OpenGLRenderer(Window& window);
+    explicit OpenGLRenderer(Window& window);
+
+    ~OpenGLRenderer() override;
 
     void SetVSync(bool vsync) override;
+    void Clear(Color color) override;
+    void SwapBuffers() override;
+
+private:
+#ifdef PLATFORM_WIN32
+    HDC m_deviceContext;
+    HGLRC m_renderingContext;
+#elif PLATFORM_LINUX
+    GLXContext m_renderingContext;
+#elif PLATFORM_MACOS
+#error "MacOS is not supported yet"
+#endif
 };

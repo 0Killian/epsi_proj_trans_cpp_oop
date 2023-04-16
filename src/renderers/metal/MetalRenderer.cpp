@@ -16,4 +16,14 @@ void MetalRenderer::SetVSync(bool vsync)
 
 }
 
+void MetalRenderer::Clear(Color color)
+{
+
+}
+
+void MetalRenderer::SwapBuffers()
+{
+
+}
+
 #endif

@@ -17,13 +17,15 @@ Application::Application()
     m_contextId = wglGetCurrentContext();
 
     _m_window = std::make_unique<::Window>("Test", ::Vector2<uint32_t>{ DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT });
-    m_renderer = _m_window->CreateRenderer(RendererType::OpenGL);
 }
 
 void Application::RunMainLoop()
 {
     try
     {
+        // Initialize the renderer
+        m_renderer = _m_window->CreateRenderer(RendererType::OpenGL);
+
         // Initialize the thread pool
         m_threadPool.Init();
 
@@ -45,12 +47,16 @@ void Application::RunMainLoop()
             {
                 m_timer = 0.0f;
                 m_window.setTitle(std::string(WINDOW_TITLE) + " - " + std::to_string(frames) + " FPS");
+                _m_window->SetTitle(std::string(WINDOW_TITLE) + " - " + std::to_string(frames) + " FPS");
                 frames = 0;
             }
 
+            m_renderer->Clear(::Color::Green());
+            m_renderer->SwapBuffers();
+
             // Update and render the frame
-            Update(delta_time);
-            Render();
+            //Update(delta_time);
+            //Render();
 
             frames++;
         }

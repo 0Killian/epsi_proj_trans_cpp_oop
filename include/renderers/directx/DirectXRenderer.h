@@ -13,6 +13,8 @@ public:
     DirectXRenderer(Window& window);
 
     void SetVSync(bool vsync) override;
+    void Clear(Color color) override;
+    void SwapBuffers() override;
 };
 
 #endif
