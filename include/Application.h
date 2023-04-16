@@ -9,6 +9,7 @@
 #include <Scene.h>
 #include <ResourceRegistry.h>
 #include <ThreadPool.h>
+#include <renderers/Renderer.h>
 
 #undef CreateWindow
 
@@ -198,4 +199,7 @@ private:
 #endif
 
     std::mutex m_threadsContextMutex;
+
+    std::unique_ptr<::Window> _m_window;
+    std::shared_ptr<Renderer> m_renderer;
 };

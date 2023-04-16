@@ -15,6 +15,9 @@ Application::Application()
     CreateWindow(sf::VideoMode({DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT}), false);
 
     m_contextId = wglGetCurrentContext();
+
+    _m_window = std::make_unique<::Window>("Test", ::Vector2<uint32_t>{ DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT });
+    m_renderer = _m_window->CreateRenderer(RendererType::OpenGL);
 }
 
 void Application::RunMainLoop()

@@ -25,7 +25,12 @@ add_executable(HarvestHaven
         src/Hotbar.cpp
         src/items/Hoe.cpp
         src/items/WateringCan.cpp
-        src/items/Carrot.cpp)
+        src/items/Carrot.cpp
+        src/Window.cpp
+        src/renderers/vulkan/VulkanRenderer.cpp
+        src/renderers/directx/DirectXRenderer.cpp
+        src/renderers/metal/MetalRenderer.cpp
+        src/renderers/opengl/OpenGLRenderer.cpp)
 
 
 target_include_directories(HarvestHaven PRIVATE include)
@@ -46,5 +51,5 @@ endif()
 
 install(TARGETS HarvestHaven)
 
-add_executable(GenerateTilemap scripts/GenerateTilemap.cpp include/Window.h)
+add_executable(GenerateTilemap scripts/GenerateTilemap.cpp include/renderers/metal/MetalRenderer.h)
 target_compile_features(GenerateTilemap PRIVATE cxx_std_23)

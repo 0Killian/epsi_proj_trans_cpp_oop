@@ -14,7 +14,13 @@
 #include <SFML/System.hpp>
 #include <cmath>
 
-#ifdef WIN32
+// Detect Platform
+#ifdef _WIN32
+#define PLATFORM_WIN32
 #define WIN32_LEAN_AND_MIN
 #include <windows.h>
+#elif __linux__
+#define PLATFORM_LINUX
+#elif __APPLE__
+#define PLATFORM_MACOS
 #endif
