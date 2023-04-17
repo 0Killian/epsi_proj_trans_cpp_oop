@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <GameObject.h>
-#include "ResourceRegistry.h"
+#include <engine/GameObject.h>
+#include "engine/ResourceRegistry.h"
 #include "Item.h"
 
 ////////////////////////////////////////////////////////////////////////////

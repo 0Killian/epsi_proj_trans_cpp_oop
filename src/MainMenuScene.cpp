@@ -4,10 +4,10 @@
 #include <items/Hoe.h>
 #include <items/WateringCan.h>
 #include "MainMenuScene.h"
-#include "Application.h"
+#include "engine/Application.h"
 #include "GameGrid.h"
 #include "Player.h"
-#include "GUILayer.h"
+#include "engine/GUILayer.h"
 #include "Inventory.h"
 #include "Hotbar.h"
 

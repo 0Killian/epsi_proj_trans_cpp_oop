@@ -2,9 +2,9 @@
 // Created by Killian on 21/03/2023.
 //
 #include "GameGrid.h"
-#include "Application.h"
+#include "engine/Application.h"
 #include "Tiles.h"
-#include "CollisionUtils.h"
+#include "engine/CollisionUtils.h"
 #include <fstream>
 #include "Player.h"
 

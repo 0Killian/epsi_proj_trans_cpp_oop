@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <Scene.h>
+#include <engine/Scene.h>
 #include <queue>
-#include "ResourceRegistry.h"
+#include "engine/ResourceRegistry.h"
 #include "GameGrid.h"
 #include "Player.h"
-#include "GUILayer.h"
+#include "engine/GUILayer.h"
 #include "Inventory.h"
 
 // A temporary scene

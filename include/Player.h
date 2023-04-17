@@ -3,10 +3,10 @@
 //
 #pragma once
 
-#include <GameObject.h>
+#include <engine/GameObject.h>
 
 #include <utility>
-#include "ResourceRegistry.h"
+#include "engine/ResourceRegistry.h"
 #include "Inventory.h"
 #include "Hotbar.h"
 #include "GameGrid.h"

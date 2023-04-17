@@ -8,8 +8,8 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include "ResourceRegistry.h"
-#include "GameObject.h"
+#include "engine/ResourceRegistry.h"
+#include "engine/GameObject.h"
 
 class Player;
 

@@ -3,8 +3,8 @@
 //
 #pragma once
 
-#include <GameObject.h>
-#include "ResourceRegistry.h"
+#include <engine/GameObject.h>
+#include "engine/ResourceRegistry.h"
 
 // The ID of an item
 enum ItemId : uint16_t

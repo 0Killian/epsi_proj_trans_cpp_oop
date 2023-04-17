@@ -8,31 +8,32 @@ FetchContent_MakeAvailable(SFML)
 
 add_executable(HarvestHaven
         src/main.cpp
-        src/Application.cpp
-        src/RandomNumberGenerator.cpp
+        src/engine/Application.cpp
+        src/engine/RandomNumberGenerator.cpp
         src/MainMenuScene.cpp
-        src/ThreadPool.cpp
+        src/engine/ThreadPool.cpp
         src/GameGrid.cpp
         src/tiles/GroundTile.cpp
         src/tiles/PassagePointTile.cpp
         src/tiles/PathTile.cpp
         src/tiles/SoilTile.cpp
         src/Player.cpp
-        src/GUILayer.cpp
+        src/engine/GUILayer.cpp
         src/Item.cpp
         src/Inventory.cpp
-        src/CollisionUtils.cpp
+        src/engine/CollisionUtils.cpp
         src/Hotbar.cpp
         src/items/Hoe.cpp
         src/items/WateringCan.cpp
         src/items/Carrot.cpp
-        src/Window.cpp
-        src/renderers/vulkan/VulkanRenderer.cpp
-        src/renderers/directx/DirectXRenderer.cpp
-        src/renderers/metal/MetalRenderer.cpp
-        src/renderers/opengl/OpenGLRenderer.cpp
-        src/glad.cpp
-        src/glad_wgl.cpp)
+        src/engine/Window.cpp
+        src/engine/renderers/vulkan/VulkanRenderer.cpp
+        src/engine/renderers/directx/DirectXRenderer.cpp
+        src/engine/renderers/metal/MetalRenderer.cpp
+        src/engine/renderers/opengl/OpenGLRenderer.cpp
+        src/engine/glad.cpp
+        src/engine/glad_wgl.cpp
+        )
 
 
 target_include_directories(HarvestHaven PRIVATE include)
@@ -53,5 +54,5 @@ endif()
 
 install(TARGETS HarvestHaven)
 
-add_executable(GenerateTilemap scripts/GenerateTilemap.cpp include/renderers/metal/MetalRenderer.h)
+add_executable(GenerateTilemap scripts/GenerateTilemap.cpp)
 target_compile_features(GenerateTilemap PRIVATE cxx_std_23)
