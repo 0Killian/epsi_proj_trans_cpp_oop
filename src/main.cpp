@@ -14,6 +14,8 @@ int main() {
 
     // Startup the application
     Application::GetInstance().RunMainLoop();
+    Application::Exit();
+
     return 0;
 }
 

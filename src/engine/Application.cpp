@@ -180,3 +180,8 @@ void Application::AddContext(HGLRC context)
 #else
 #error Not Supported!
 #endif
+
+void Application::Exit()
+{
+    s_instance.release();
+}

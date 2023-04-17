@@ -92,6 +92,8 @@ public:
     [[nodiscard]] inline uint32_t GetWindowHeight() const { return m_windowHeight; }
     [[nodiscard]] inline float GetAspectRatio() const { return static_cast<float>(m_windowWidth) / static_cast<float>(m_windowHeight); }
 
+    static void Exit();
+
     static constexpr std::string_view WINDOW_TITLE = "Harvest Haven";
     static constexpr float ZOOM_FACTOR = 1.0f;
 
