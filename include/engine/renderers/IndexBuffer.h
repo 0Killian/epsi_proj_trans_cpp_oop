@@ -1,27 +1,22 @@
 //
 // Created by Killian on 17/04/2023.
 //
-
 #pragma once
 
-#include "VertexBufferElement.h"
-#include "Renderer.h"
-
-template <IsVertexBufferElement T>
-class VertexBuffer
+class IndexBuffer
 {
 public:
     class Mapping
     {
     public:
-        Mapping(VertexBuffer& buffer, T* data) : m_buffer(buffer), m_data(data)
+        Mapping(IndexBuffer& buffer, uint32_t* data) : m_buffer(buffer), m_data(data)
         {
             m_buffer.UpdateMappingPointer(this);
         }
 
         Mapping(const Mapping& other) = delete;
         Mapping(Mapping&& other) noexcept
-            : m_buffer(other.m_buffer), m_data(other.m_data)
+                : m_buffer(other.m_buffer), m_data(other.m_data)
         {
             other.m_data = nullptr;
         }
@@ -42,29 +37,29 @@ public:
                 m_buffer.Unmap();
         }
 
-        T& operator[](size_t index)
+        uint32_t& operator[](size_t index)
         {
             return m_data[index];
         }
 
-        T* operator->()
+        uint32_t* operator->()
         {
             return m_data;
         }
 
-        T& operator*()
+        uint32_t& operator*()
         {
             return *m_data;
         }
 
-        T* operator&()
+        uint32_t* operator&()
         {
             return m_data;
         }
 
     private:
-        VertexBuffer& m_buffer;
-        T* m_data;
+        IndexBuffer& m_buffer;
+        uint32_t* m_data;
     };
 
     enum class Usage : uint8_t
@@ -74,14 +69,16 @@ public:
         Stream
     };
 
-    virtual ~VertexBuffer() = default;
+    virtual ~IndexBuffer() = default;
 
     virtual void Bind() = 0;
     virtual void Unbind() = 0;
 
-    virtual void SetData(const T* data, size_t count) = 0;
-    virtual void UpdateData(const T* data, size_t count, size_t offset) = 0;
+    virtual void SetData(const uint32_t* data, size_t count) = 0;
+    virtual void UpdateData(const uint32_t* data, size_t count, size_t offset) = 0;
     [[nodiscard]] virtual Mapping Map(size_t offset, size_t count) = 0;
+
+    [[nodiscard]] virtual size_t GetCount() = 0;
 
 protected:
     friend Mapping;

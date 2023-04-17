@@ -33,7 +33,8 @@ add_executable(HarvestHaven
         src/engine/renderers/opengl/OpenGLRenderer.cpp
         src/engine/glad.cpp
         src/engine/glad_wgl.cpp
-        )
+        src/engine/renderers/opengl/VertexBuffer.cpp
+        src/engine/renderers/opengl/IndexBuffer.cpp)
 
 
 target_include_directories(HarvestHaven PRIVATE include)
