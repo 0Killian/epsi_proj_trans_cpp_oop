@@ -44,15 +44,11 @@ void Shader::LoadFromFile(const std::string &path)
     }
 
     size_t fileSize = (size_t)file.tellg();
-    std::vector<char> buffer(fileSize);
+    spirvBinary.resize(fileSize / sizeof(uint32_t) + (fileSize % sizeof(uint32_t) != 0));
 
     file.seekg(0);
-    file.read(buffer.data(), static_cast<std::streamsize>(fileSize));
+    file.read(reinterpret_cast<char*>(spirvBinary.data()), static_cast<std::streamsize>(fileSize));
     file.close();
-
-    // Convert the binary to a vector of 32-bit words
-    std::transform(buffer.begin(), buffer.end(), std::back_inserter(spirvBinary),
-           [](char c) { return static_cast<uint32_t>(c); });
 
     // Compile the SPIR-V binary
     spirv_cross::CompilerGLSL compiler(spirvBinary);
