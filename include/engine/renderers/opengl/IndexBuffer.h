@@ -44,8 +44,6 @@ private:
     size_t m_count = 0;
     ::IndexBuffer::Usage m_usage = ::IndexBuffer::Usage::Static;
     ::IndexBuffer::Mapping* m_mapping = nullptr;
-
-    static uint32_t s_boundId;
 };
 
 }

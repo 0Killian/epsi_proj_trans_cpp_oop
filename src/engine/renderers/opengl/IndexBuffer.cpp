@@ -6,8 +6,6 @@
 namespace OpenGL
 {
 
-uint32_t IndexBuffer::s_boundId = 0;
-
 IndexBuffer::IndexBuffer(::IndexBuffer::Usage usage)
     : m_usage(usage)
 {
@@ -22,7 +20,7 @@ IndexBuffer::IndexBuffer(::IndexBuffer::Usage usage)
 IndexBuffer::IndexBuffer(::IndexBuffer::Usage usage, const uint32_t* indices, size_t count)
     : IndexBuffer(usage)
 {
-        SetData(indices, count);
+    SetData(indices, count);
 }
 
 IndexBuffer& IndexBuffer::operator=(const IndexBuffer& other)
@@ -74,20 +72,12 @@ std::vector<std::shared_ptr<::IndexBuffer>> IndexBuffer::CreateIndexBuffers(::In
 
 void IndexBuffer::Bind()
 {
-    if(s_boundId != m_id)
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id);
-        s_boundId = m_id;
-    }
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id);
 }
 
 void IndexBuffer::Unbind()
 {
-    if(s_boundId != 0)
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        s_boundId = 0;
-    }
+     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void IndexBuffer::SetData(const uint32_t* indices, size_t count)
@@ -168,9 +158,6 @@ IndexBuffer::~IndexBuffer()
         spdlog::error("Trying to delete an OpenGL VertexBuffer that is still mapped");
 #endif
     glDeleteBuffers(1, &m_id);
-
-    if(m_id == s_boundId)
-        s_boundId = 0;
 }
 
 void IndexBuffer::Unmap()

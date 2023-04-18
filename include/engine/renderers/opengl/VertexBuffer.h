@@ -11,10 +11,10 @@
 namespace OpenGL
 {
 
-extern uint32_t s_boundVertexBufferId;
+GLenum ShaderDataTypeToOpenGLBaseType(VertexBufferLayout::Type type);
 
 template <IsVertexBufferElement T>
-class VertexBuffer : ::VertexBuffer<T>
+class VertexBuffer : public ::VertexBuffer<T>
 {
 public:
     explicit VertexBuffer(typename ::VertexBuffer<T>::Usage usage) : m_usage(usage)
@@ -79,18 +79,12 @@ public:
 
     void Bind() override
     {
-        if (m_id != s_boundVertexBufferId)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, m_id);
-        }
+        glBindBuffer(GL_ARRAY_BUFFER, m_id);
     }
 
     void Unbind() override
     {
-        if(s_boundVertexBufferId != 0)
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-        }
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void SetData(const T* data, size_t count) override
@@ -161,7 +155,7 @@ public:
             GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT)
         );
 
-        return ::VertexBuffer<T>::Mapping(this, data);
+        return ::VertexBuffer<T>::Mapping(*this, data);
     }
 
     ~VertexBuffer() override
@@ -174,8 +168,6 @@ public:
             spdlog::error("Trying to delete an OpenGL VertexBuffer that is still mapped");
 #endif
         glDeleteBuffers(1, &m_id);
-
-        if(m_id == s_boundVertexBufferId);
     }
 
 protected:
