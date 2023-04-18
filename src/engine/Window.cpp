@@ -32,17 +32,25 @@ Window::Window(const std::string_view& title, Vector2<uint32_t> size, bool fulls
 
     RegisterClassEx(&wc);
 
+    // Adjust the window size to fit the client area
+    if(!m_fullscreen)
+    {
+        RECT windowRect = { 0, 0, static_cast<LONG>(m_size.x), static_cast<LONG>(m_size.y) };
+        AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+        m_size.x = windowRect.right - windowRect.left;
+        m_size.y = windowRect.bottom - windowRect.top;
+    }
 
     // Create the window
     m_windowHandle = CreateWindowEx(
         0,
         CLASS_NAME,
         title.data(),
-        WS_OVERLAPPEDWINDOW,
+        !m_fullscreen ? WS_OVERLAPPEDWINDOW : 0,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        static_cast<int>(size.x),
-        static_cast<int>(size.y),
+        static_cast<int>(m_size.x),
+        static_cast<int>(m_size.y),
         nullptr,
         nullptr,
         GetModuleHandle(nullptr),
