@@ -6,6 +6,7 @@
 
 #include "engine/renderers/opengl/VertexBuffer.h"
 #include "engine/renderers/opengl/IndexBuffer.h"
+#include "engine/renderers/opengl/Shader.h"
 
 //#include "renderers/vulkan/VertexBuffer.h"
 //#include "renderers/directx/VertexBuffer.h"
@@ -90,5 +91,25 @@ static std::vector<std::shared_ptr<::IndexBuffer>> CreateIndexBuffers(const std:
         throw std::runtime_error("Metal::IndexBuffer::CreateIndexBuffers() is not implemented yet.");
     default:
         return {};
+    }
+}
+
+static std::shared_ptr<::Shader> CreateShader(const std::shared_ptr<Renderer>& renderer, ::Shader::Type type)
+{
+    switch (renderer->GetAPI())
+    {
+    case RendererAPI::RendererAPI_OpenGL:
+        return std::make_shared<OpenGL::Shader>(type);
+    case RendererAPI::RendererAPI_Vulkan:
+        //return std::make_shared<Vulkan::Shader>(vertexShaderSource, fragmentShaderSource);
+        throw std::runtime_error("Vulkan::Shader::CreateShader() is not implemented yet.");
+    case RendererAPI::RendererAPI_DirectX:
+        //return std::make_shared<DirectX::Shader>(vertexShaderSource, fragmentShaderSource);
+        throw std::runtime_error("DirectX::Shader::CreateShader() is not implemented yet.");
+    case RendererAPI::RendererAPI_Metal:
+        //return std::make_shared<Metal::Shader>(vertexShaderSource, fragmentShaderSource);
+        throw std::runtime_error("Metal::Shader::CreateShader() is not implemented yet.");
+    default:
+        return nullptr;
     }
 }

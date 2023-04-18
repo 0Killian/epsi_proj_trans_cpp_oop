@@ -12,3 +12,4 @@ _deps
 cmake-build-debug
 cmake-build-debug-event-trace
 .idea
+working_directory/assets/shaders

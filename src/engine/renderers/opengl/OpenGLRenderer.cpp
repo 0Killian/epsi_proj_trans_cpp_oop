@@ -1,9 +1,8 @@
 //
 // Created by Killian on 16/04/2023.
 //
-
-#include <engine/glad/glad.h>
-#include <engine/glad/glad_wgl.h>
+#include "engine/glad/glad.h"
+#include "engine/glad/glad_wgl.h"
 #include "engine/renderers/opengl/OpenGLRenderer.h"
 
 namespace OpenGL
