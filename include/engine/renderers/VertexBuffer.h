@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "VertexBufferElement.h"
+#include "VertexBufferLayout.h"
 #include "Renderer.h"
 
 template <IsVertexBufferElement T>

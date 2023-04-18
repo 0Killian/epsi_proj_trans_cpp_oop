@@ -1,3 +1,5 @@
+#include <utility>
+
 //
 // Created by Killian on 17/04/2023.
 //
@@ -53,14 +55,47 @@ public:
         return 0;
     }
 
+    static size_t GetTypeComponentCount(Type type)
+    {
+        switch (type)
+        {
+        case Type::Float:
+            return 1;
+        case Type::Float2:
+            return 2;
+        case Type::Float3:
+            return 3;
+        case Type::Float4:
+            return 4;
+        case Type::Mat3:
+            return 3 * 3;
+        case Type::Mat4:
+            return 4 * 4;
+        case Type::Int:
+            return 1;
+        case Type::Int2:
+            return 2;
+        case Type::Int3:
+            return 3;
+        case Type::Int4:
+            return 4;
+        case Type::Bool:
+            return 1;
+        }
+
+        return 0;
+    }
+
     struct Element
     {
+        std::string name;
         Type type;
         bool normalized;
-        size_t offset;
+        size_t offset = 0;
+        size_t componentCount;
 
-        explicit Element(Type type, bool normalized = false)
-            : type(type), normalized(normalized), offset(0)
+        Element(std::string  name, Type type, bool normalized = false)
+            : type(type), normalized(normalized), offset(0), name(std::move(name)), componentCount(GetTypeComponentCount(type))
         {
         }
     };
@@ -85,11 +120,8 @@ private:
     std::vector<Element> m_elements;
 };
 
-class VertexBufferElement
-{
-public:
-    [[nodiscard]] virtual VertexBufferLayout GetLayout() = 0;
-};
-
 template <typename T>
-concept IsVertexBufferElement = std::is_base_of_v<VertexBufferElement, T>;
+concept IsVertexBufferElement = requires(T _)
+{
+    { T::GetLayout() } -> std::same_as<VertexBufferLayout>;
+};
