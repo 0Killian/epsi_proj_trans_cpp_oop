@@ -128,7 +128,7 @@ public:
         glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(T), count * sizeof(T), data);
     }
 
-    typename ::VertexBuffer<T>::Mapping Map(size_t offset, size_t count) override
+    Mapping<::VertexBuffer<T>, T> Map(size_t offset, size_t count) override
     {
         Bind();
 
@@ -155,7 +155,7 @@ public:
             GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT)
         );
 
-        return ::VertexBuffer<T>::Mapping(*this, data);
+        return Mapping<::VertexBuffer<T>, T>(*this, data);
     }
 
     ~VertexBuffer() override
@@ -171,7 +171,7 @@ public:
     }
 
 protected:
-    void UpdateMappingPointer(typename ::VertexBuffer<T>::Mapping* ptr) override
+    void UpdateMappingPointer(Mapping<::VertexBuffer<T>, T>* ptr) override
     {
         m_mapping = ptr;
     }
@@ -190,7 +190,7 @@ private:
 
     uint32_t m_id = 0;
     typename ::VertexBuffer<T>::Usage m_usage = ::VertexBuffer<T>::Usage::Static;
-    typename ::VertexBuffer<T>::Mapping* m_mapping = 0;
+    typename Mapping<::VertexBuffer<T>, T>* m_mapping = 0;
 };
 
 }

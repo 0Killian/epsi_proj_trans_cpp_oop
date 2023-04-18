@@ -123,7 +123,7 @@ void IndexBuffer::UpdateData(const uint32_t* data, size_t count, size_t offset)
     );
 }
 
-[[nodiscard]] ::IndexBuffer::Mapping IndexBuffer::Map(size_t offset, size_t count)
+[[nodiscard]] Mapping<::IndexBuffer, uint32_t> IndexBuffer::Map(size_t offset, size_t count)
 {
     Bind();
 
@@ -160,11 +160,13 @@ IndexBuffer::~IndexBuffer()
     glDeleteBuffers(1, &m_id);
 }
 
-void IndexBuffer::Unmap()
+Mapping<::IndexBuffer, uint32_t>* IndexBuffer::Unmap()
 {
     Bind();
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+    Mapping<::IndexBuffer, uint32_t>* mapping = m_mapping;
     m_mapping = nullptr;
+    return mapping;
 }
 
 IndexBuffer::IndexBuffer(::IndexBuffer::Usage usage, uint32_t id)

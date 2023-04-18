@@ -28,14 +28,18 @@ public:
     void Unbind() override;
     void SetData(const uint32_t* indices, size_t count) override;
     void UpdateData(const uint32_t* data, size_t count, size_t offset) override;
-    [[nodiscard]] ::IndexBuffer::Mapping Map(size_t offset, size_t count) override;
+    [[nodiscard]] Mapping<::IndexBuffer, uint32_t> Map(size_t offset, size_t count) override;
     [[nodiscard]] inline size_t GetCount() override { return m_count; }
 
     ~IndexBuffer() override;
 
 protected:
-    void Unmap() override;
-    inline void UpdateMappingPointer(Mapping* mapping) override { m_mapping = mapping; }
+    Mapping<::IndexBuffer, uint32_t>* Unmap() override;
+    inline Mapping<::IndexBuffer, uint32_t>* UpdateMappingPointer(Mapping<::IndexBuffer, uint32_t>* mapping) override
+    {
+        m_mapping = mapping;
+        return mapping;
+    }
 
 private:
     IndexBuffer(::IndexBuffer::Usage usage, uint32_t id);
@@ -43,7 +47,7 @@ private:
     uint32_t m_id = 0;
     size_t m_count = 0;
     ::IndexBuffer::Usage m_usage = ::IndexBuffer::Usage::Static;
-    ::IndexBuffer::Mapping* m_mapping = nullptr;
+    Mapping<::IndexBuffer, uint32_t>* m_mapping = nullptr;
 };
 
 }
