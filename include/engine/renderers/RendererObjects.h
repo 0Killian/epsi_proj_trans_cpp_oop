@@ -7,13 +7,14 @@
 #include "engine/renderers/opengl/VertexBuffer.h"
 #include "engine/renderers/opengl/IndexBuffer.h"
 #include "engine/renderers/opengl/Shader.h"
+#include "engine/renderers/opengl/Pipeline.h"
 
 //#include "renderers/vulkan/VertexBuffer.h"
 //#include "renderers/directx/VertexBuffer.h"
 //#include "renderers/metal/VertexBuffer.h"
 
 template <typename T>
-static std::shared_ptr<::VertexBuffer<T>> CreateVertexBuffer(const std::shared_ptr<Renderer>& renderer, typename ::VertexBuffer<T>::Usage usage)
+std::shared_ptr<::VertexBuffer<T>> CreateVertexBuffer(const std::shared_ptr<Renderer>& renderer, typename ::VertexBuffer<T>::Usage usage)
 {
     switch (renderer->GetAPI())
     {
@@ -34,7 +35,7 @@ static std::shared_ptr<::VertexBuffer<T>> CreateVertexBuffer(const std::shared_p
 }
 
 template <typename T>
-static std::vector<std::shared_ptr<::VertexBuffer<T>>> CreateVertexBuffers(const std::shared_ptr<Renderer>& renderer, typename ::VertexBuffer<T>::Usage usage, size_t count)
+std::vector<std::shared_ptr<::VertexBuffer<T>>> CreateVertexBuffers(const std::shared_ptr<Renderer>& renderer, typename ::VertexBuffer<T>::Usage usage, size_t count)
 {
     switch (renderer->GetAPI())
     {
@@ -54,7 +55,7 @@ static std::vector<std::shared_ptr<::VertexBuffer<T>>> CreateVertexBuffers(const
     }
 }
 
-static std::shared_ptr<::IndexBuffer> CreateIndexBuffer(const std::shared_ptr<Renderer>& renderer, ::IndexBuffer::Usage usage)
+std::shared_ptr<::IndexBuffer> CreateIndexBuffer(const std::shared_ptr<Renderer>& renderer, ::IndexBuffer::Usage usage)
 {
     switch (renderer->GetAPI())
     {
@@ -74,7 +75,7 @@ static std::shared_ptr<::IndexBuffer> CreateIndexBuffer(const std::shared_ptr<Re
     }
 }
 
-static std::vector<std::shared_ptr<::IndexBuffer>> CreateIndexBuffers(const std::shared_ptr<Renderer>& renderer, ::IndexBuffer::Usage usage, size_t count)
+std::vector<std::shared_ptr<::IndexBuffer>> CreateIndexBuffers(const std::shared_ptr<Renderer>& renderer, ::IndexBuffer::Usage usage, size_t count)
 {
     switch (renderer->GetAPI())
     {
@@ -94,7 +95,7 @@ static std::vector<std::shared_ptr<::IndexBuffer>> CreateIndexBuffers(const std:
     }
 }
 
-static std::shared_ptr<::Shader> CreateShader(const std::shared_ptr<Renderer>& renderer, ::Shader::Type type)
+std::shared_ptr<::Shader> CreateShader(const std::shared_ptr<Renderer>& renderer, ::Shader::Type type)
 {
     switch (renderer->GetAPI())
     {
@@ -109,6 +110,33 @@ static std::shared_ptr<::Shader> CreateShader(const std::shared_ptr<Renderer>& r
     case RendererAPI::RendererAPI_Metal:
         //return std::make_shared<Metal::Shader>(vertexShaderSource, fragmentShaderSource);
         throw std::runtime_error("Metal::Shader::CreateShader() is not implemented yet.");
+    default:
+        return nullptr;
+    }
+}
+
+template <typename T>
+std::shared_ptr<::Pipeline<T>> CreatePipeline(
+        const std::shared_ptr<Renderer>& renderer,
+        ::Vector2<uint32_t> viewportPos,
+        ::Vector2<uint32_t> viewportSize,
+        ::Vector2<uint32_t> scissorsPos,
+        ::Vector2<uint32_t> scissorsSize,
+        PrimitiveTopology primitiveTopology)
+{
+    switch(renderer->GetAPI())
+    {
+    case RendererAPI::RendererAPI_OpenGL:
+        return std::make_shared<OpenGL::Pipeline<T>>(viewportPos, viewportSize, scissorsPos, scissorsSize, primitiveTopology);
+    case RendererAPI::RendererAPI_Vulkan:
+        //return std::make_shared<Vulkan::Pipeline>();
+        throw std::runtime_error("Vulkan::Pipeline::CreatePipeline() is not implemented yet.");
+    case RendererAPI::RendererAPI_DirectX:
+        //return std::make_shared<DirectX::Pipeline>();
+        throw std::runtime_error("DirectX::Pipeline::CreatePipeline() is not implemented yet.");
+    case RendererAPI::RendererAPI_Metal:
+        //return std::make_shared<Metal::Pipeline>();
+        throw std::runtime_error("Metal::Pipeline::CreatePipeline() is not implemented yet.");
     default:
         return nullptr;
     }

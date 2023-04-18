@@ -27,6 +27,61 @@ void Application::RunMainLoop()
         // Initialize the renderer
         m_renderer = _m_window->CreateRenderer(RendererAPI::RendererAPI_OpenGL);
 
+        auto vertexShader = CreateShader(m_renderer, ::Shader::Type::Vertex);
+        vertexShader->LoadFromFile("assets/shaders/vertexShader.vert.spv");
+
+        auto fragmentShader = CreateShader(m_renderer, ::Shader::Type::Fragment);
+        fragmentShader->LoadFromFile("assets/shaders/fragmentShader.frag.spv");
+
+#pragma pack(push, 1)
+        struct Vertex
+        {
+            float x = 0;
+            float y = 0;
+            float z = 0;
+
+            Vertex() = default;
+            Vertex(float x, float y, float z) : x(x), y(y), z(z) {}
+
+            [[nodiscard]] static VertexBufferLayout GetLayout()
+            {
+                return {
+                    { "aPos", ::VertexBufferLayout::Type::Float3 }
+                };
+            }
+        };
+#pragma pack(pop)
+
+        std::vector<Vertex> vertices = {
+            { -0.5f, -0.5f, 0.0f },
+            {  0.5f, -0.5f, 0.0f },
+            { -0.5f,  0.5f, 0.0f },
+            {  0.5f,  0.5f, 0.0f }
+        };
+
+        auto vertexBuffer = CreateVertexBuffer<Vertex>(m_renderer, ::VertexBuffer<Vertex>::Usage::Static);
+        vertexBuffer->SetData(vertices.data(), vertices.size());
+
+        std::vector<uint32_t> indices = {
+            0, 1, 2,
+            1, 2, 3
+        };
+
+        auto indexBuffer = CreateIndexBuffer(m_renderer, ::IndexBuffer::Usage::Static);
+        indexBuffer->SetData(indices.data(), indices.size());
+
+        auto pipeline = CreatePipeline<Vertex>(
+                m_renderer,
+                { 0, 0 }, { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT },
+                { 0, 0 }, { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT },
+                PrimitiveTopology::Triangles);
+        pipeline->SetVertexShader(vertexShader);
+        pipeline->SetFragmentShader(fragmentShader);
+        pipeline->SetVertexBuffer(vertexBuffer);
+        pipeline->SetIndexBuffer(indexBuffer);
+
+        pipeline->Bind();
+
         // Initialize the thread pool
         m_threadPool.Init();
 
@@ -53,6 +108,7 @@ void Application::RunMainLoop()
             }
 
             m_renderer->Clear(::Color::Green());
+            pipeline->Render();
             m_renderer->SwapBuffers();
 
             // Update and render the frame
@@ -183,5 +239,5 @@ void Application::AddContext(HGLRC context)
 
 void Application::Exit()
 {
-    s_instance.release();
+    s_instance.reset();
 }

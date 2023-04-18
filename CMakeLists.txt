@@ -89,7 +89,9 @@ add_executable(HarvestHaven
         src/engine/glad.cpp
         src/engine/glad_wgl.cpp
         src/engine/renderers/opengl/VertexBuffer.cpp
-        src/engine/renderers/opengl/IndexBuffer.cpp src/engine/renderers/opengl/Shader.cpp)
+        src/engine/renderers/opengl/IndexBuffer.cpp
+        src/engine/renderers/opengl/Shader.cpp
+        src/engine/renderers/opengl/Pipeline.cpp)
 
 
 target_include_directories(HarvestHaven PRIVATE include)
