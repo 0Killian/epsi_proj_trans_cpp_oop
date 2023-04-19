@@ -6,10 +6,10 @@
 
 #include "engine/renderers/Renderer.h"
 
-namespace Vulkan
+namespace Engine::Vulkan
 {
 
-class Renderer : public ::Renderer
+class Renderer : public Engine::Renderer
 {
 public:
     Renderer(Window &window);

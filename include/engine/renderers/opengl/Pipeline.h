@@ -8,7 +8,7 @@
 #include "engine/renderers/Pipeline.h"
 #include "engine/glad/glad.h"
 
-namespace OpenGL
+namespace Engine::OpenGL
 {
 
 GLenum PrimitiveTopologyToOpenGLTopology(PrimitiveTopology topology);
@@ -16,14 +16,14 @@ GLenum PrimitiveTopologyToOpenGLTopology(PrimitiveTopology topology);
 extern uint32_t s_boundProgramId;
 
 template <typename T>
-class Pipeline : public ::Pipeline<T>
+class Pipeline : public Engine::Pipeline<T>
 {
 public:
     Pipeline(
-            ::Vector2<uint32_t> viewportPos,
-            ::Vector2<uint32_t> viewportSize,
-            ::Vector2<uint32_t> scissorsPos,
-            ::Vector2<uint32_t> scissorsSize,
+            Vector2<uint32_t> viewportPos,
+            Vector2<uint32_t> viewportSize,
+            Vector2<uint32_t> scissorsPos,
+            Vector2<uint32_t> scissorsSize,
             PrimitiveTopology topology) :
         m_viewportPos(viewportPos), m_viewportSize(viewportSize), m_scissorsPos(scissorsPos), m_scissorsSize(scissorsSize), m_topology(topology)
     {
@@ -316,7 +316,7 @@ public:
                             glVertexAttribPointer(
                                     inputResults.location,
                                     static_cast<GLint>(element.componentCount),
-                                    OpenGL::ShaderDataTypeToOpenGLBaseType(element.type),
+                                    OpenGL::ShaderBaseTypeToOpenGLBaseType(element.type),
                                     element.normalized ? GL_TRUE : GL_FALSE,
                                     static_cast<GLint>(layout.GetStride()),
                                     reinterpret_cast<void*>(element.offset)
@@ -355,7 +355,7 @@ public:
         }
     }
 
-    void SetViewport(const ::Vector2<uint32_t>& pos, const ::Vector2<uint32_t>& size) override
+    void SetViewport(const Vector2<uint32_t>& pos, const Vector2<uint32_t>& size) override
     {
         m_viewportPos = pos;
         m_viewportSize = size;
@@ -367,12 +367,12 @@ public:
         m_scissorsSize = {width, height};
     }
 
-    void SetVertexShader(const std::shared_ptr<::Shader>& shader) override
+    void SetVertexShader(const std::shared_ptr<Engine::Shader>& shader) override
     {
         const std::shared_ptr<OpenGL::Shader>& glShader = std::dynamic_pointer_cast<OpenGL::Shader>(shader);
 
 #ifdef DEBUG
-        if(glShader && glShader->GetType() != ::Shader::Type::Vertex)
+        if(glShader && glShader->GetType() != ShaderType::ShaderType_Vertex)
             throw std::runtime_error("Invalid shader type.");
 #endif
 
@@ -380,12 +380,12 @@ public:
         m_shouldLink = true;
     }
 
-    void SetTessellationControlShader(const std::shared_ptr<::Shader>& shader) override
+    void SetTessellationControlShader(const std::shared_ptr<Engine::Shader>& shader) override
     {
         const std::shared_ptr<OpenGL::Shader>& glShader = std::dynamic_pointer_cast<OpenGL::Shader>(shader);
 
 #ifdef DEBUG
-        if(glShader && glShader->GetType() != ::Shader::Type::TessellationControl)
+        if(glShader && glShader->GetType() != ShaderType::ShaderType_TessellationControl)
             throw std::runtime_error("Invalid shader type.");
 #endif
 
@@ -393,12 +393,12 @@ public:
         m_shouldLink = true;
     }
 
-    void SetTessellationEvaluationShader(const std::shared_ptr<::Shader>& shader) override
+    void SetTessellationEvaluationShader(const std::shared_ptr<Engine::Shader>& shader) override
     {
         const std::shared_ptr<OpenGL::Shader>& glShader = std::dynamic_pointer_cast<OpenGL::Shader>(shader);
 
 #ifdef DEBUG
-        if(glShader && glShader->GetType() != ::Shader::Type::TessellationEvaluation)
+        if(glShader && glShader->GetType() != ShaderType::ShaderType_TessellationEvaluation)
             throw std::runtime_error("Invalid shader type.");
 #endif
 
@@ -406,12 +406,12 @@ public:
         m_shouldLink = true;
     }
 
-    void SetGeometryShader(const std::shared_ptr<::Shader>& shader) override
+    void SetGeometryShader(const std::shared_ptr<Engine::Shader>& shader) override
     {
         const std::shared_ptr<OpenGL::Shader>& glShader = std::dynamic_pointer_cast<OpenGL::Shader>(shader);
 
 #ifdef DEBUG
-        if(glShader && glShader->GetType() != ::Shader::Type::Geometry)
+        if(glShader && glShader->GetType() != ShaderType::ShaderType_Geometry)
             throw std::runtime_error("Invalid shader type.");
 #endif
 
@@ -419,12 +419,12 @@ public:
         m_shouldLink = true;
     }
 
-    void SetFragmentShader(const std::shared_ptr<::Shader>& shader) override
+    void SetFragmentShader(const std::shared_ptr<Engine::Shader>& shader) override
     {
         const std::shared_ptr<OpenGL::Shader>& glShader = std::dynamic_pointer_cast<OpenGL::Shader>(shader);
 
 #ifdef DEBUG
-        if(glShader && glShader->GetType() != ::Shader::Type::Fragment)
+        if(glShader && glShader->GetType() != ShaderType::ShaderType_Fragment)
             throw std::runtime_error("Invalid shader type.");
 #endif
 
@@ -432,12 +432,12 @@ public:
         m_shouldLink = true;
     }
 
-    void SetComputeShader(const std::shared_ptr<::Shader>& shader) override
+    void SetComputeShader(const std::shared_ptr<Engine::Shader>& shader) override
     {
         const std::shared_ptr<OpenGL::Shader>& glShader = std::dynamic_pointer_cast<OpenGL::Shader>(shader);
 
 #ifdef DEBUG
-        if(glShader && glShader->GetType() != ::Shader::Type::Compute)
+        if(glShader && glShader->GetType() != ShaderType::ShaderType_Compute)
             throw std::runtime_error("Invalid shader type.");
 #endif
 
@@ -481,10 +481,10 @@ private:
     uint32_t m_programId = 0;
     uint32_t m_vertexArrayId = 0;
 
-    ::Vector2<uint32_t> m_viewportPos = {};
-    ::Vector2<uint32_t> m_viewportSize = {};
-    ::Vector2<uint32_t> m_scissorsPos = {};
-    ::Vector2<uint32_t> m_scissorsSize = {};
+    Vector2<uint32_t> m_viewportPos = {};
+    Vector2<uint32_t> m_viewportSize = {};
+    Vector2<uint32_t> m_scissorsPos = {};
+    Vector2<uint32_t> m_scissorsSize = {};
 
     std::shared_ptr<OpenGL::Shader> m_vertexShader;
     std::shared_ptr<OpenGL::Shader> m_tessellationControlShader;

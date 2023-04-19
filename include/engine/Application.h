@@ -10,6 +10,7 @@
 #include <engine/ResourceRegistry.h>
 #include <engine/ThreadPool.h>
 #include <engine/renderers/Renderer.h>
+#include "engine/glad/glad_glx.h"
 
 #undef CreateWindow
 
@@ -109,10 +110,10 @@ protected:
     /// \return The context id
     ///
     ////////////////////////////////////////////////////////////
-#ifdef _WIN32
-    [[nodiscard]] HGLRC GetContextId() { return m_contextId; }
+#ifdef PLATFORM_WINDOWS
+    //[[nodiscard]] HGLRC GetContextId() { return m_contextId; }
 #else
-#error Not Supported!
+    [[nodiscard]] GLXContext GetContextId() { return m_contextId; }
 #endif
 
 protected:
@@ -127,10 +128,10 @@ protected:
     /// \param context The context to add
     ///
     ////////////////////////////////////////////////////////////
-#ifdef _WIN32
-    void AddContext(HGLRC context);
+#ifdef PLATFORM_WINDOWS
+    //void AddContext(HGLRC context);
 #else
-#error Not Supported!
+    //void AddContext(GLXContext context);
 #endif
 
 
@@ -197,11 +198,12 @@ private:
     HGLRC m_contextId;
     std::vector<HGLRC> m_threadsContext;
 #else
-#error Not Supported!
+    GLXContext m_contextId;
+    std::vector<GLXContext> m_threadsContext;
 #endif
 
     std::mutex m_threadsContextMutex;
 
-    std::unique_ptr<::Window> _m_window;
-    std::shared_ptr<Renderer> m_renderer;
+    std::unique_ptr<Engine::Window> _m_window;
+    std::shared_ptr<Engine::Renderer> m_renderer;
 };

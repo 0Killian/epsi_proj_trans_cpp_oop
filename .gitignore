@@ -10,6 +10,6 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 cmake-build-debug
-cmake-build-debug-event-trace
+cmake-build-linuxdebug
 .idea
 working_directory/assets/shaders

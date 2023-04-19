@@ -1,86 +1,65 @@
-#include <utility>
-
 //
 // Created by Killian on 17/04/2023.
 //
 
 #pragma once
 
+namespace Engine
+{
+
+enum class ShaderBaseType : uint8_t
+{
+    ShaderBaseType_Float,
+    ShaderBaseType_Float2,
+    ShaderBaseType_Float3,
+    ShaderBaseType_Float4,
+    ShaderBaseType_Mat3,
+    ShaderBaseType_Mat4,
+    ShaderBaseType_Int,
+    ShaderBaseType_Int2,
+    ShaderBaseType_Int3,
+    ShaderBaseType_Int4,
+    ShaderBaseType_Bool
+};
+
 class VertexBufferLayout
 {
 public:
-    enum class Type
-    {
-        Float,
-        Float2,
-        Float3,
-        Float4,
-        Mat3,
-        Mat4,
-        Int,
-        Int2,
-        Int3,
-        Int4,
-        Bool
-    };
-
-    static size_t GetSizeOfType(Type type)
+    static size_t GetSizeOfType(ShaderBaseType type)
     {
         switch (type)
         {
-        case Type::Float:
-            return 4;
-        case Type::Float2:
-            return 4 * 2;
-        case Type::Float3:
-            return 4 * 3;
-        case Type::Float4:
-            return 4 * 4;
-        case Type::Mat3:
-            return 4 * 3 * 3;
-        case Type::Mat4:
-            return 4 * 4 * 4;
-        case Type::Int:
-            return 4;
-        case Type::Int2:
-            return 4 * 2;
-        case Type::Int3:
-            return 4 * 3;
-        case Type::Int4:
-            return 4 * 4;
-        case Type::Bool:
-            return 1;
+        case ShaderBaseType::ShaderBaseType_Float:return 4;
+        case ShaderBaseType::ShaderBaseType_Float2:return 4 * 2;
+        case ShaderBaseType::ShaderBaseType_Float3:return 4 * 3;
+        case ShaderBaseType::ShaderBaseType_Float4:return 4 * 4;
+        case ShaderBaseType::ShaderBaseType_Mat3:return 4 * 3 * 3;
+        case ShaderBaseType::ShaderBaseType_Mat4:return 4 * 4 * 4;
+        case ShaderBaseType::ShaderBaseType_Int:return 4;
+        case ShaderBaseType::ShaderBaseType_Int2:return 4 * 2;
+        case ShaderBaseType::ShaderBaseType_Int3:return 4 * 3;
+        case ShaderBaseType::ShaderBaseType_Int4:return 4 * 4;
+        case ShaderBaseType::ShaderBaseType_Bool:return 1;
         }
 
         return 0;
     }
 
-    static size_t GetTypeComponentCount(Type type)
+    static size_t GetTypeComponentCount(ShaderBaseType type)
     {
         switch (type)
         {
-        case Type::Float:
-            return 1;
-        case Type::Float2:
-            return 2;
-        case Type::Float3:
-            return 3;
-        case Type::Float4:
-            return 4;
-        case Type::Mat3:
-            return 3 * 3;
-        case Type::Mat4:
-            return 4 * 4;
-        case Type::Int:
-            return 1;
-        case Type::Int2:
-            return 2;
-        case Type::Int3:
-            return 3;
-        case Type::Int4:
-            return 4;
-        case Type::Bool:
-            return 1;
+        case ShaderBaseType::ShaderBaseType_Float:return 1;
+        case ShaderBaseType::ShaderBaseType_Float2:return 2;
+        case ShaderBaseType::ShaderBaseType_Float3:return 3;
+        case ShaderBaseType::ShaderBaseType_Float4:return 4;
+        case ShaderBaseType::ShaderBaseType_Mat3:return 3 * 3;
+        case ShaderBaseType::ShaderBaseType_Mat4:return 4 * 4;
+        case ShaderBaseType::ShaderBaseType_Int:return 1;
+        case ShaderBaseType::ShaderBaseType_Int2:return 2;
+        case ShaderBaseType::ShaderBaseType_Int3:return 3;
+        case ShaderBaseType::ShaderBaseType_Int4:return 4;
+        case ShaderBaseType::ShaderBaseType_Bool:return 1;
         }
 
         return 0;
@@ -89,22 +68,27 @@ public:
     struct Element
     {
         std::string name;
-        Type type;
+        ShaderBaseType type;
         bool normalized;
         size_t offset = 0;
         size_t componentCount;
 
-        Element(std::string  name, Type type, bool normalized = false)
-            : type(type), normalized(normalized), offset(0), name(std::move(name)), componentCount(GetTypeComponentCount(type))
+        Element(std::string name, ShaderBaseType type, bool normalized = false)
+            :
+            type(type),
+            normalized(normalized),
+            offset(0),
+            name(std::move(name)),
+            componentCount(GetTypeComponentCount(type))
         {
         }
     };
 
     VertexBufferLayout(std::initializer_list<Element> elements)
-        : m_elements(elements)
+            : m_elements(elements)
     {
         size_t offset = 0;
-        for (auto& element : m_elements)
+        for (auto &element: m_elements)
         {
             element.offset = offset;
             offset += GetSizeOfType(element.type);
@@ -113,6 +97,7 @@ public:
     }
 
     [[nodiscard]] inline const std::vector<Element>& GetElements() const { return m_elements; }
+
     [[nodiscard]] inline size_t GetStride() const { return m_stride; }
 
 private:
@@ -120,8 +105,10 @@ private:
     std::vector<Element> m_elements;
 };
 
-template <typename T>
-concept IsVertexBufferElement = requires(T _)
+template<typename T>
+concept IsVertexBufferElement = requires
 {
     { T::GetLayout() } -> std::same_as<VertexBufferLayout>;
 };
+
+}

@@ -7,13 +7,13 @@
 #include <spirv_glsl.hpp>
 #include "engine/renderers/Shader.h"
 
-namespace OpenGL
+namespace Engine::OpenGL
 {
 
-class Shader : public ::Shader
+class Shader : public Engine::Shader
 {
 public:
-    explicit Shader(::Shader::Type type);
+    explicit Shader(ShaderType type);
     ~Shader() override;
 
     void LoadFromFile(const std::string& path) override;
@@ -23,7 +23,7 @@ protected:
     friend class Pipeline;
 
     [[nodiscard]] inline uint32_t GetId() const { return m_id; }
-    [[nodiscard]] inline ::Shader::Type GetType() const { return m_type; }
+    [[nodiscard]] inline ShaderType GetType() const { return m_type; }
 
 private:
     void ConvertSampledImages(spirv_cross::CompilerGLSL& compiler, spirv_cross::SmallVector<spirv_cross::Resource>& resources);
@@ -43,7 +43,7 @@ private:
     void ConvertBuiltinOutputs(spirv_cross::CompilerGLSL& compiler, spirv_cross::SmallVector<spirv_cross::BuiltInResource>& resources);
 
     uint32_t m_id = 0;
-    ::Shader::Type m_type;
+    ShaderType m_type;
 };
 
 }

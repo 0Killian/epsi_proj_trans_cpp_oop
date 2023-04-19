@@ -4,6 +4,9 @@
 
 #pragma once
 
+namespace Engine
+{
+
 template <typename T>
 class Vector2
 {
@@ -188,4 +191,7 @@ public:
             return *this;
         return other;
     }
+
 };
+
+}

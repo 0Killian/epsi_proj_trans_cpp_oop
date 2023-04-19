@@ -75,6 +75,7 @@
         Too many extensions
 */
 
+#ifdef PLATFORM_WINDOWS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1723,3 +1724,4 @@ int gladLoadWGLLoader(GLADloadproc load, HDC hdc) {
 	return 1;
 }
 
+#endif

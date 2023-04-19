@@ -4,20 +4,25 @@
 
 #pragma once
 
+namespace Engine
+{
+
+enum class ShaderType : uint8_t
+{
+    ShaderType_Vertex,
+    ShaderType_TessellationControl,
+    ShaderType_TessellationEvaluation,
+    ShaderType_Geometry,
+    ShaderType_Fragment,
+    ShaderType_Compute
+};
+
 class Shader
 {
 public:
-    enum class Type : uint8_t
-    {
-        Vertex,
-        TessellationControl,
-        TessellationEvaluation,
-        Geometry,
-        Fragment,
-        Compute
-    };
-
     virtual ~Shader() = default;
 
     virtual void LoadFromFile(const std::string& path) = 0;
 };
+
+}

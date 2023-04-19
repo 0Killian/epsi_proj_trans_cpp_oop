@@ -7,7 +7,10 @@
 #include <engine/renderers/metal/MetalRenderer.h>
 #include "engine/Window.h"
 
-#ifdef PLATFORM_WIN32
+#ifdef PLATFORM_WINDOWS
+
+namespace Engine
+{
 
 Window::Window(const std::string_view& title, Vector2<uint32_t> size, bool fullscreen, bool vsync)
     : m_vsync(vsync), m_size(size), m_fullscreen(fullscreen), m_title(title)
@@ -37,8 +40,8 @@ Window::Window(const std::string_view& title, Vector2<uint32_t> size, bool fulls
     {
         RECT windowRect = { 0, 0, static_cast<LONG>(m_size.x), static_cast<LONG>(m_size.y) };
         AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
-        m_size.x = windowRect.right - windowRect.left;
-        m_size.y = windowRect.bottom - windowRect.top;
+        size.x = windowRect.right - windowRect.left;
+        size.y = windowRect.bottom - windowRect.top;
     }
 
     // Create the window
@@ -49,8 +52,8 @@ Window::Window(const std::string_view& title, Vector2<uint32_t> size, bool fulls
         !m_fullscreen ? WS_OVERLAPPEDWINDOW : 0,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
-        static_cast<int>(m_size.x),
-        static_cast<int>(m_size.y),
+        static_cast<int>(size.x),
+        static_cast<int>(size.y),
         nullptr,
         nullptr,
         GetModuleHandle(nullptr),
@@ -62,7 +65,14 @@ Window::Window(const std::string_view& title, Vector2<uint32_t> size, bool fulls
         throw std::runtime_error("Failed to create window");
     }
 
+    SetFullscreen(m_fullscreen);
+
     ShowWindow(m_windowHandle, SW_SHOW);
+}
+
+Window::~Window()
+{
+    DestroyWindow(m_windowHandle);
 }
 
 void Window::SetFullscreen(bool fullscreen)
@@ -77,11 +87,18 @@ void Window::SetFullscreen(bool fullscreen)
     else
     {
         SetWindowLong(m_windowHandle, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-        SetWindowPos(m_windowHandle, HWND_TOP, 0, 0, static_cast<int>(m_size.x), static_cast<int>(m_size.y), SWP_FRAMECHANGED);
+        RECT windowRect = { 0, 0, static_cast<LONG>(m_size.x), static_cast<LONG>(m_size.y) };
+        AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+        SetWindowPos(
+                m_windowHandle,
+                HWND_TOP,
+                0, 0,
+                static_cast<int>(windowRect.right - windowRect.left), static_cast<int>(windowRect.bottom - windowRect.top),
+                SWP_FRAMECHANGED);
     }
 }
 
-void Window::SetTitle(const std::string& title)
+void Window::SetTitle(const std::string_view& title)
 {
     m_title = title;
     SetWindowText(m_windowHandle, m_title.c_str());
@@ -94,7 +111,15 @@ void Window::Resize(uint32_t width, uint32_t height)
 
     if (!m_fullscreen)
     {
-        SetWindowPos(m_windowHandle, HWND_TOP, 0, 0, static_cast<int>(m_size.x), static_cast<int>(m_size.y), SWP_FRAMECHANGED);
+        SetWindowLong(m_windowHandle, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+        RECT windowRect = { 0, 0, static_cast<LONG>(m_size.x), static_cast<LONG>(m_size.y) };
+        AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
+        SetWindowPos(
+                m_windowHandle,
+                HWND_TOP,
+                0, 0,
+                static_cast<int>(windowRect.right - windowRect.left), static_cast<int>(windowRect.bottom - windowRect.top),
+                SWP_FRAMECHANGED);
     }
 }
 
@@ -111,12 +136,6 @@ Vector2<uint32_t> Window::GetSize() const
     return m_size;
 }
 
-#elif PLATFORM_LINUX
-
-#elif PLATFORM_MACOS
-#error "MacOS is not supported yet"
-#endif
-
 std::shared_ptr<Renderer> Window::CreateRenderer(RendererAPI type)
 {
     switch (type)
@@ -130,21 +149,10 @@ std::shared_ptr<Renderer> Window::CreateRenderer(RendererAPI type)
         break;
 
     case RendererAPI::RendererAPI_DirectX:
-#ifdef PLATFORM_WIN32
-    m_renderer = std::make_shared<DirectX::Renderer>(*this);
+        m_renderer = std::make_shared<DirectX::Renderer>(*this);
         break;
-#else
-        throw std::runtime_error("DirectX is only supported on Windows");
-#endif
-
     case RendererAPI::RendererAPI_Metal:
-#ifdef PLATFORM_MACOS
-    m_renderer = std::make_shared<Metal::Renderer>(m_windowHandle);
-        break;
-#else
         throw std::runtime_error("Metal is only supported on MacOS");
-#endif
-
     default:
         throw std::runtime_error("Unknown renderer type");
     }
@@ -162,3 +170,8 @@ void Window::SetVSync(bool vsync)
         m_renderer->SetVSync(vsync);
     }
 }
+
+}
+
+#endif
+

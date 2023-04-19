@@ -5,11 +5,12 @@
 #pragma once
 
 #include "engine/renderers/Renderer.h"
+#include "engine/glad/glad_glx.h"
 
-namespace OpenGL
+namespace Engine::OpenGL
 {
 
-class Renderer : public ::Renderer
+class Renderer : public Engine::Renderer
 {
 public:
     explicit Renderer(Window &window);
@@ -22,12 +23,12 @@ public:
     [[nodiscard]] inline RendererAPI GetAPI() const override { return RendererAPI::RendererAPI_OpenGL; };
 
 private:
-#ifdef PLATFORM_WIN32
+#if defined(PLATFORM_WINDOWS)
     HDC m_deviceContext;
     HGLRC m_renderingContext;
-#elif PLATFORM_LINUX
-    GLXContext m_renderingContext;
-#elif PLATFORM_MACOS
+#elif defined(PLATFORM_LINUX)
+    GLXContext m_context;
+#elif defined(PLATFORM_MACOS)
 #error "MacOS is not supported yet"
 #endif
 };

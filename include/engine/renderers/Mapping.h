@@ -3,7 +3,11 @@
 //
 #pragma once
 
-template <typename Controller, typename T>
+namespace Engine
+{
+
+// TODO: Find a better way to do that
+template<typename Controller, typename T>
 class Mapping
 {
 public:
@@ -13,6 +17,7 @@ public:
     }
 
     Mapping(const Mapping& other) = delete;
+
     Mapping(Mapping&& other) noexcept
             : m_controller(other.m_controller), m_data(other.m_data)
     {
@@ -20,6 +25,7 @@ public:
     }
 
     Mapping& operator=(const Mapping& other) = delete;
+
     Mapping& operator=(Mapping&& other) noexcept
     {
         m_controller = other.m_buffer;
@@ -31,7 +37,7 @@ public:
 
     ~Mapping()
     {
-        if(m_data != nullptr)
+        if (m_data != nullptr)
             m_controller.Unmap();
     }
 
@@ -59,3 +65,5 @@ private:
     Controller& m_controller;
     T* m_data;
 };
+
+}

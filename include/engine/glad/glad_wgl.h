@@ -75,7 +75,7 @@
         Too many extensions
 */
 
-
+#ifdef PLATFORM_WINDOWS
 #ifndef WINAPI
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
@@ -86,7 +86,7 @@
 #include <windows.h>
 #endif
 
-#include <engine/glad/glad.h>
+#include "engine/glad/glad.h"
 
 #ifndef __glad_wglext_h_
 
@@ -1137,4 +1137,5 @@ GLAPI PFNWGLWAITFORSBCOMLPROC glad_debug_wglWaitForSbcOML;
 }
 #endif
 
+#endif
 #endif

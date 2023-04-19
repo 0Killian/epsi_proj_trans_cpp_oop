@@ -7,10 +7,10 @@
 
 #include "renderers/Renderer.h"
 
-namespace Metal
+namespace Engine::Metal
 {
 
-class Renderer : public ::Renderer
+class Renderer : public Engine::Renderer
 {
 public:
     Renderer(Window& window);

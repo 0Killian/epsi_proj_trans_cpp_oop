@@ -12,7 +12,7 @@
 #define DEFINE_REGISTRY(path, type) \
     constexpr const char type##Path[] = path; \
     constexpr const char type##Name[] = #type;\
-    typedef ResourceRegistry<type##Path, type, type##Name> type##Registry;
+    typedef ResourceRegistry<type##Path, sf::type, type##Name> type##Registry;
 template <char const* BASE_PATH, typename T, const char* TYPE_NAME>
 #else
 #define DEFINE_REGISTRY(path, type) \
@@ -305,8 +305,5 @@ private:
     std::unordered_map<const char*, std::tuple<uint64_t, T>> m_registry;
 };
 
-namespace {
-    using namespace sf;
-    DEFINE_REGISTRY("assets/textures/", Texture)
-    DEFINE_REGISTRY("assets/fonts/", Font)
-}
+DEFINE_REGISTRY("assets/textures/", Texture)
+DEFINE_REGISTRY("assets/fonts/", Font)

@@ -3,13 +3,14 @@
 //
 
 #ifdef PLATFORM_MACOS
+
 #include "renderers/metal/MetalRenderer.h"
 
-namespace Metal
+namespace Engine::Metal
 {
 
-Renderer::Renderer(Window& window)
-    : ::Renderer(window)
+Renderer::Renderer(Engine::Window& window)
+    : Engine::Renderer(window)
 {
 
 }

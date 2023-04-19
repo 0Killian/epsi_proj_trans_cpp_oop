@@ -5,13 +5,13 @@
 #include "engine/glad/glad_wgl.h"
 #include "engine/renderers/opengl/OpenGLRenderer.h"
 
-namespace OpenGL
+#ifdef PLATFORM_WINDOWS
+
+namespace Engine::OpenGL
 {
 
-#ifdef PLATFORM_WIN32
-
 Renderer::Renderer(Window &window)
-    : ::Renderer(window)
+    : Engine::Renderer(window)
 {
     // The steps to create an OpenGL Context on Windows are a little bit tricky:
     // 1. Create a dummy OpenGL Context
@@ -94,7 +94,7 @@ Renderer::Renderer(Window &window)
     // Create the real OpenGL Context
     int attributes[] = {
         WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-        WGL_CONTEXT_MINOR_VERSION_ARB, 6,
+        WGL_CONTEXT_MINOR_VERSION_ARB, 5,
 #ifdef DEBUG
         WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB | WGL_CONTEXT_DEBUG_BIT_ARB,
 #else
@@ -130,12 +130,6 @@ void Renderer::SetVSync(bool vsync)
     wglSwapIntervalEXT(vsync ? 1 : 0);
 }
 
-#elif PLATFORM_LINUX
-#error "Linux is not supported yet"
-#elif PLATFORM_MACOS
-#error "MacOS is not supported yet"
-#endif
-
 void Renderer::Clear(Color color)
 {
     glClearColor(color.r, color.g, color.b, color.a);
@@ -148,3 +142,5 @@ void Renderer::SwapBuffers()
 }
 
 }
+
+#endif

@@ -3,10 +3,10 @@
 //
 #include "engine/renderers/opengl/IndexBuffer.h"
 
-namespace OpenGL
+namespace Engine::OpenGL
 {
 
-IndexBuffer::IndexBuffer(::IndexBuffer::Usage usage)
+IndexBuffer::IndexBuffer(IndexBufferUsage usage)
     : m_usage(usage)
 {
     glGenBuffers(1, &m_id);
@@ -17,7 +17,7 @@ IndexBuffer::IndexBuffer(::IndexBuffer::Usage usage)
 #endif
 }
 
-IndexBuffer::IndexBuffer(::IndexBuffer::Usage usage, const uint32_t* indices, size_t count)
+IndexBuffer::IndexBuffer(IndexBufferUsage usage, const uint32_t* indices, size_t count)
     : IndexBuffer(usage)
 {
     SetData(indices, count);
@@ -59,13 +59,13 @@ IndexBuffer& IndexBuffer::operator=(IndexBuffer&& other) noexcept
     return *this;
 }
 
-std::vector<std::shared_ptr<::IndexBuffer>> IndexBuffer::CreateIndexBuffers(::IndexBuffer::Usage usage, size_t count)
+std::vector<std::shared_ptr<Engine::IndexBuffer>> IndexBuffer::CreateIndexBuffers(IndexBufferUsage usage, size_t count)
 {
     std::vector<uint32_t> ids(count);
     glGenBuffers(static_cast<GLsizei>(count), ids.data());
-    std::vector<std::shared_ptr<::IndexBuffer>> buffers(count);
+    std::vector<std::shared_ptr<Engine::IndexBuffer>> buffers(count);
     std::transform(ids.begin(), ids.end(), buffers.begin(), [usage](uint32_t id)
-    { return std::shared_ptr<IndexBuffer>(new IndexBuffer(usage, id)); });
+        { return std::shared_ptr<Engine::IndexBuffer>(new IndexBuffer(usage, id)); });
 
     return buffers;
 }
@@ -86,13 +86,13 @@ void IndexBuffer::SetData(const uint32_t* indices, size_t count)
 
     switch(m_usage)
     {
-        case Usage::Static:
+        case IndexBufferUsage::IndexBufferUsage_Static:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLintptr>(count * sizeof(uint32_t)), indices, GL_STATIC_DRAW);
         break;
-        case Usage::Dynamic:
+        case IndexBufferUsage::IndexBufferUsage_Dynamic:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLintptr>(count * sizeof(uint32_t)), indices, GL_DYNAMIC_DRAW);
         break;
-        case Usage::Stream:
+        case IndexBufferUsage::IndexBufferUsage_Stream:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLintptr>(count * sizeof(uint32_t)), indices, GL_STREAM_DRAW);
         break;
     }
@@ -123,7 +123,7 @@ void IndexBuffer::UpdateData(const uint32_t* data, size_t count, size_t offset)
     );
 }
 
-[[nodiscard]] Mapping<::IndexBuffer, uint32_t> IndexBuffer::Map(size_t offset, size_t count)
+[[nodiscard]] Mapping<Engine::IndexBuffer, uint32_t> IndexBuffer::Map(size_t offset, size_t count)
 {
     Bind();
 
@@ -160,16 +160,14 @@ IndexBuffer::~IndexBuffer()
     glDeleteBuffers(1, &m_id);
 }
 
-Mapping<::IndexBuffer, uint32_t>* IndexBuffer::Unmap()
+void IndexBuffer::Unmap()
 {
     Bind();
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-    Mapping<::IndexBuffer, uint32_t>* mapping = m_mapping;
     m_mapping = nullptr;
-    return mapping;
 }
 
-IndexBuffer::IndexBuffer(::IndexBuffer::Usage usage, uint32_t id)
+IndexBuffer::IndexBuffer(IndexBufferUsage usage, uint32_t id)
     : m_usage(usage), m_id(id)
 {
 #ifdef DEBUG

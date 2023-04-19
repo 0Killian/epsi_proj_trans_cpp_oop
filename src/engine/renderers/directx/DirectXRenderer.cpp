@@ -2,14 +2,16 @@
 // Created by Killian on 16/04/2023.
 //
 
-#ifdef PLATFORM_WIN32
+#ifdef PLATFORM_WINDOWS
+
 #include "engine/renderers/directx/DirectXRenderer.h"
 
-namespace DirectX
+
+namespace Engine::DirectX
 {
 
-Renderer::Renderer(Window &window)
-    : ::Renderer(window)
+Renderer::Renderer(Engine::Window &window)
+    : Engine::Renderer(window)
 {
 
 }

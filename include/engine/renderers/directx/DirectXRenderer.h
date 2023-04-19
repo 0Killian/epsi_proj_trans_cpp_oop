@@ -2,15 +2,15 @@
 // Created by Killian on 16/04/2023.
 //
 
-#ifdef PLATFORM_WIN32
+#ifdef PLATFORM_WINDOWS
 #pragma once
 
 #include "engine/renderers/Renderer.h"
 
-namespace DirectX
+namespace Engine::DirectX
 {
 
-class Renderer : public ::Renderer
+class Renderer : public Engine::Renderer
 {
 public:
     Renderer(Window &window);

@@ -5,24 +5,24 @@
 #include "engine/glad/glad.h"
 #include <fstream>
 
-namespace OpenGL
+namespace Engine::OpenGL
 {
 
-Shader::Shader(::Shader::Type type) : m_type(type)
+Shader::Shader(ShaderType type) : m_type(type)
 {
     switch (m_type)
     {
-    case ::Shader::Type::Vertex:m_id = glCreateShader(GL_VERTEX_SHADER);
+    case ShaderType::ShaderType_Vertex:m_id = glCreateShader(GL_VERTEX_SHADER);
         break;
-    case ::Shader::Type::TessellationControl:m_id = glCreateShader(GL_TESS_CONTROL_SHADER);
+    case ShaderType::ShaderType_TessellationControl:m_id = glCreateShader(GL_TESS_CONTROL_SHADER);
         break;
-    case ::Shader::Type::TessellationEvaluation:m_id = glCreateShader(GL_TESS_EVALUATION_SHADER);
+    case ShaderType::ShaderType_TessellationEvaluation:m_id = glCreateShader(GL_TESS_EVALUATION_SHADER);
         break;
-    case ::Shader::Type::Geometry:m_id = glCreateShader(GL_GEOMETRY_SHADER);
+    case ShaderType::ShaderType_Geometry:m_id = glCreateShader(GL_GEOMETRY_SHADER);
         break;
-    case ::Shader::Type::Fragment:m_id = glCreateShader(GL_FRAGMENT_SHADER);
+    case ShaderType::ShaderType_Fragment:m_id = glCreateShader(GL_FRAGMENT_SHADER);
         break;
-    case ::Shader::Type::Compute:m_id = glCreateShader(GL_COMPUTE_SHADER);
+    case ShaderType::ShaderType_Compute:m_id = glCreateShader(GL_COMPUTE_SHADER);
         break;
     }
 }

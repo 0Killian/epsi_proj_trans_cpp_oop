@@ -4,11 +4,11 @@
 
 #include "engine/renderers/vulkan/VulkanRenderer.h"
 
-namespace Vulkan
+namespace Engine::Vulkan
 {
 
-Renderer::Renderer(Window &window)
-    : ::Renderer(window)
+Renderer::Renderer(Engine::Window &window)
+    : Engine::Renderer(window)
 {
 
 }

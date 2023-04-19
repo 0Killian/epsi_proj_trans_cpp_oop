@@ -15,12 +15,19 @@
 #include <cmath>
 
 // Detect Platform
-#ifdef _WIN32
-#define PLATFORM_WIN32
+#if defined(_WIN32)
+#define PLATFORM_WINDOWS
 #define WIN32_LEAN_AND_MIN
 #include <windows.h>
-#elif __linux__
+
+#elif defined(__linux__)
 #define PLATFORM_LINUX
-#elif __APPLE__
+#include <xcb/xcb.h>
+#include <X11/keysym.h>
+#include <X11/XKBlib.h>
+#include <X11/Xlib.h>
+#include <X11/Xlib-xcb.h>
+
+#elif defined(__APPLE__)
 #define PLATFORM_MACOS
 #endif

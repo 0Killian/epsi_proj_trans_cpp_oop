@@ -15,9 +15,15 @@ Application::Application()
 
     CreateWindow(sf::VideoMode({DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT}), false);
 
-    m_contextId = wglGetCurrentContext();
+#if defined(PLATFORM_WINDOWS)
+    //m_contextId = wglGetCurrentContext();
+#elif defined(PLATFORM_LINUX)
+    //m_contextId = glXGetCurrentContext();
+#elif defined(PLATFORM_MACOS)
+#error "MacOS is not supported yet"
+#endif
 
-    _m_window = std::make_unique<::Window>("Test", ::Vector2<uint32_t>{ DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT });
+    _m_window = std::make_unique<Engine::Window>("Test", Engine::Vector2<uint32_t>{ DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT });
 }
 
 void Application::RunMainLoop()
@@ -25,12 +31,12 @@ void Application::RunMainLoop()
     try
     {
         // Initialize the renderer
-        m_renderer = _m_window->CreateRenderer(RendererAPI::RendererAPI_OpenGL);
+        m_renderer = _m_window->CreateRenderer(Engine::RendererAPI::RendererAPI_OpenGL);
 
-        auto vertexShader = CreateShader(m_renderer, ::Shader::Type::Vertex);
+        auto vertexShader = Engine::CreateShader(m_renderer, Engine::ShaderType::ShaderType_Vertex);
         vertexShader->LoadFromFile("assets/shaders/vertexShader.vert.spv");
 
-        auto fragmentShader = CreateShader(m_renderer, ::Shader::Type::Fragment);
+        auto fragmentShader = Engine::CreateShader(m_renderer, Engine::ShaderType::ShaderType_Fragment);
         fragmentShader->LoadFromFile("assets/shaders/fragmentShader.frag.spv");
 
 #pragma pack(push, 1)
@@ -43,10 +49,10 @@ void Application::RunMainLoop()
             Vertex() = default;
             Vertex(float x, float y, float z) : x(x), y(y), z(z) {}
 
-            [[nodiscard]] static VertexBufferLayout GetLayout()
+            [[nodiscard]] static Engine::VertexBufferLayout GetLayout()
             {
                 return {
-                    { "aPos", ::VertexBufferLayout::Type::Float3 }
+                    { "aPos", Engine::ShaderBaseType::ShaderBaseType_Float3 }
                 };
             }
         };
@@ -59,7 +65,7 @@ void Application::RunMainLoop()
             {  0.5f,  0.5f, 0.0f }
         };
 
-        auto vertexBuffer = CreateVertexBuffer<Vertex>(m_renderer, ::VertexBuffer<Vertex>::Usage::Static);
+        auto vertexBuffer = Engine::CreateVertexBuffer<Vertex>(m_renderer, Engine::VertexBufferUsage::VertexBufferUsage_Static);
         vertexBuffer->SetData(vertices.data(), vertices.size());
 
         std::vector<uint32_t> indices = {
@@ -67,14 +73,14 @@ void Application::RunMainLoop()
             1, 2, 3
         };
 
-        auto indexBuffer = CreateIndexBuffer(m_renderer, ::IndexBuffer::Usage::Static);
+        auto indexBuffer = Engine::CreateIndexBuffer(m_renderer, Engine::IndexBufferUsage::IndexBufferUsage_Static);
         indexBuffer->SetData(indices.data(), indices.size());
 
         auto pipeline = CreatePipeline<Vertex>(
                 m_renderer,
                 { 0, 0 }, { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT },
                 { 0, 0 }, { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT },
-                PrimitiveTopology::Triangles);
+                Engine::PrimitiveTopology::Triangles);
         pipeline->SetVertexShader(vertexShader);
         pipeline->SetFragmentShader(fragmentShader);
         pipeline->SetVertexBuffer(vertexBuffer);
@@ -107,7 +113,7 @@ void Application::RunMainLoop()
                 frames = 0;
             }
 
-            m_renderer->Clear(::Color::Green());
+            m_renderer->Clear(Engine::Color::Green());
             pipeline->Render();
             m_renderer->SwapBuffers();
 
@@ -210,32 +216,33 @@ void Application::CreateWindow(sf::VideoMode mode, bool fullscreen)
     m_window.setVerticalSyncEnabled(true);
     m_window.setKeyRepeatEnabled(false);
 
-    std::unique_lock<std::mutex> lock(m_threadsContextMutex);
-    for(auto& context : m_threadsContext)
-    {
-#ifdef _WIN32
-        wglShareLists(m_contextId, context);
-#else
-#error Not Supported!
+    //std::unique_lock<std::mutex> lock(m_threadsContextMutex);
+    //for(auto& context : m_threadsContext)
+    //{
+#if defined(PLATFORM_WINDOWS)
+        //wglShareLists(m_contextId, context);
+#elif defined(PLATFORM_LINUX)
+        // TODO
 #endif
-    }
-    lock.unlock();
+    //}
+    //lock.unlock();
 
     m_windowWidth = mode.size.x;
     m_windowHeight = mode.size.y;
     m_fullscreen = fullscreen;
 }
 
-#ifdef _WIN32
-void Application::AddContext(HGLRC context)
-{
-    std::unique_lock<std::mutex> lock(m_threadsContextMutex);
-    m_threadsContext.push_back(context);
-    wglShareLists(m_contextId, context);
-}
-#else
-#error Not Supported!
+#if defined(PLATFORM_WINDOWS)
+//void Application::AddContext(HGLRC context)
+#elif defined(PLATFORM_LINUX)
+//void Application::AddContext(GLXContext context)
+#elif defined(PLATFORM_MACOS)
+#error "Not implemented"
 #endif
+//{
+    //std::unique_lock<std::mutex> lock(m_threadsContextMutex);
+    //m_threadsContext.push_back(context);
+//}
 
 void Application::Exit()
 {

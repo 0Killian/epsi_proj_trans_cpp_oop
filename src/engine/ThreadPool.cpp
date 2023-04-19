@@ -29,10 +29,10 @@ void ThreadPool::Init()
                 {
                     throw std::runtime_error("Failed to activate context!");
                 }
-#ifdef _WIN32
-                Application::GetInstance().AddContext(wglGetCurrentContext());
+#ifdef PLATFORM_WINDOWS
+                //Application::GetInstance().AddContext(wglGetCurrentContext());
 #else
-#error Not Supported!
+//#error Not Supported!
 #endif
                 m_creationCondition.notify_one();
 

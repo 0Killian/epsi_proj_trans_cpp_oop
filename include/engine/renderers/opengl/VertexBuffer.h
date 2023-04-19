@@ -8,16 +8,16 @@
 #include "engine/glad/glad.h"
 #include "engine/glad/glad.h"
 
-namespace OpenGL
+namespace Engine::OpenGL
 {
 
-GLenum ShaderDataTypeToOpenGLBaseType(VertexBufferLayout::Type type);
+GLenum ShaderBaseTypeToOpenGLBaseType(ShaderBaseType type);
 
 template <IsVertexBufferElement T>
-class VertexBuffer : public ::VertexBuffer<T>
+class VertexBuffer : public Engine::VertexBuffer<T>
 {
 public:
-    explicit VertexBuffer(typename ::VertexBuffer<T>::Usage usage) : m_usage(usage)
+    explicit VertexBuffer(VertexBufferUsage usage) : m_usage(usage)
     {
         glGenBuffers(1, &m_id);
 #ifdef DEBUG
@@ -65,14 +65,14 @@ public:
         return *this;
     }
 
-    static std::vector<std::shared_ptr<::VertexBuffer<T>>> CreateVertexBuffers(typename ::VertexBuffer<T>::Usage usage, int count)
+    static std::vector<std::shared_ptr<Engine::VertexBuffer<T>>> CreateVertexBuffers(VertexBufferUsage usage, int count)
     {
         // TODO: profile multiple vertex buffer creation vs one by one
-        std::vector<std::shared_ptr<::VertexBuffer<T>>> buffers(count);
+        std::vector<std::shared_ptr<Engine::VertexBuffer<T>>> buffers(count);
         std::vector<uint32_t> ids(count);
         glGenBuffers(count, ids.data());
         std::transform(ids.begin(), ids.end(), buffers.begin(), [&](uint32_t id)
-            { return std::shared_ptr<VertexBuffer>(new VertexBuffer(usage, id)); });
+            { return std::shared_ptr<Engine::VertexBuffer<T>>(new VertexBuffer(usage, id)); });
 
         return buffers;
     }
@@ -92,13 +92,13 @@ public:
         Bind();
         switch(m_usage)
         {
-        case ::VertexBuffer<T>::Usage::Static:
+        case VertexBufferUsage::VertexBufferUsage_Static:
             glBufferData(GL_ARRAY_BUFFER, count * sizeof(T), data, GL_STATIC_DRAW);
             break;
-        case ::VertexBuffer<T>::Usage::Dynamic:
+        case VertexBufferUsage::VertexBufferUsage_Dynamic:
             glBufferData(GL_ARRAY_BUFFER, count * sizeof(T), data, GL_DYNAMIC_DRAW);
             break;
-        case ::VertexBuffer<T>::Usage::Stream:
+        case VertexBufferUsage::VertexBufferUsage_Stream:
             glBufferData(GL_ARRAY_BUFFER, count * sizeof(T), data, GL_STREAM_DRAW);
             break;
         }
@@ -128,7 +128,7 @@ public:
         glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(T), count * sizeof(T), data);
     }
 
-    Mapping<::VertexBuffer<T>, T> Map(size_t offset, size_t count) override
+    Mapping<Engine::VertexBuffer<T>, T> Map(size_t offset, size_t count) override
     {
         Bind();
 
@@ -155,7 +155,7 @@ public:
             GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT)
         );
 
-        return Mapping<::VertexBuffer<T>, T>(*this, data);
+        return Mapping<Engine::VertexBuffer<T>, T>(*this, data);
     }
 
     ~VertexBuffer() override
@@ -167,11 +167,12 @@ public:
         if(m_mapping != nullptr)
             spdlog::error("Trying to delete an OpenGL VertexBuffer that is still mapped");
 #endif
+
         glDeleteBuffers(1, &m_id);
     }
 
 protected:
-    void UpdateMappingPointer(Mapping<::VertexBuffer<T>, T>* ptr) override
+    void UpdateMappingPointer(Mapping<Engine::VertexBuffer<T>, T>* ptr) override
     {
         m_mapping = ptr;
     }
@@ -184,13 +185,13 @@ protected:
     }
 
 private:
-    VertexBuffer(typename ::VertexBuffer<T>::Usage usage, uint32_t id)
+    VertexBuffer(VertexBufferUsage usage, uint32_t id)
         : m_id(id), m_usage(usage)
     {}
 
     uint32_t m_id = 0;
-    typename ::VertexBuffer<T>::Usage m_usage = ::VertexBuffer<T>::Usage::Static;
-    typename Mapping<::VertexBuffer<T>, T>* m_mapping = 0;
+    VertexBufferUsage m_usage = VertexBufferUsage::VertexBufferUsage_Static;
+    Mapping<Engine::VertexBuffer<T>, T>* m_mapping = 0;
 };
 
 }

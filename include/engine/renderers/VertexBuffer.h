@@ -8,17 +8,20 @@
 #include "Renderer.h"
 #include "engine/renderers/Mapping.h"
 
-template <IsVertexBufferElement T>
+namespace Engine
+{
+
+enum class VertexBufferUsage : uint8_t
+{
+    VertexBufferUsage_Static,
+    VertexBufferUsage_Dynamic,
+    VertexBufferUsage_Stream
+};
+
+template<IsVertexBufferElement T>
 class VertexBuffer
 {
 public:
-    enum class Usage : uint8_t
-    {
-        Static,
-        Dynamic,
-        Stream
-    };
-
     virtual ~VertexBuffer() = default;
 
     virtual void Bind() = 0;
@@ -26,6 +29,7 @@ public:
 
     virtual void SetData(const T* data, size_t count) = 0;
     virtual void UpdateData(const T* data, size_t count, size_t offset) = 0;
+
     [[nodiscard]] virtual Mapping<VertexBuffer, T> Map(size_t offset, size_t count) = 0;
 
 protected:
@@ -34,3 +38,5 @@ protected:
     virtual void UpdateMappingPointer(Mapping<VertexBuffer, T>* mapping) = 0;
     virtual void Unmap() = 0;
 };
+
+}
