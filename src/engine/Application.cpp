@@ -91,7 +91,7 @@ void Application::RunMainLoop()
         auto indexBuffer = Engine::CreateIndexBuffer(m_renderer, Engine::IndexBufferUsage::IndexBufferUsage_Static);
         indexBuffer->SetData(indices.data(), indices.size());
 
-        auto pipeline = CreatePipeline<Vertex>(
+        auto pipeline = CreatePipeline(
                 m_renderer,
                 { 0, 0 }, { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT },
                 { 0, 0 }, { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT },
@@ -169,7 +169,7 @@ void Application::RunMainLoop()
             view = Engine::Matrix4<float>::LookAt({xpos, ypos, zpos}, objectPosition, { 0.0f, 1.0f, 0.0f });
 
             model = Engine::Matrix4<float>::Translation(objectPosition) * Engine::Matrix4<float>::Rotation({xrot, yrot, 45.0f + zrot});
-            Engine::Matrix4<float> mvp = projection * view * model;
+            mvp = projection * view * model;
             pipeline->SetUniform("uTexture", texture);
             pipeline->SetUniform("uniforms.MVP", mvp);
             pipeline->Render();

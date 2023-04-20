@@ -10,20 +10,26 @@
 namespace Engine::OpenGL
 {
 
+class Pipeline;
+
 class Shader : public Engine::Shader
 {
 public:
     explicit Shader(ShaderType type);
+
+    Shader(const Shader& other) = delete;
+    Shader(Shader&& other) noexcept = delete;
+    Shader& operator=(const Shader& other) = delete;
+    Shader& operator=(Shader&& other) noexcept = delete;
+
     ~Shader() override;
 
     void LoadFromFile(const std::string& path) override;
 
 protected:
-    template <typename T>
+#ifdef DEBUG
     friend class Pipeline;
-
-    [[nodiscard]] inline uint32_t GetId() const { return m_id; }
-    [[nodiscard]] inline ShaderType GetType() const { return m_type; }
+#endif
 
 private:
     void ConvertSampledImages(spirv_cross::CompilerGLSL& compiler, spirv_cross::SmallVector<spirv_cross::Resource>& resources);

@@ -10,13 +10,14 @@ namespace Engine
 {
 
 template <typename T>
+requires std::is_arithmetic_v<T>
 class Matrix4
 {
 public:
     T data[4][4];
 
     constexpr Matrix4() : data {0} {};
-    explicit constexpr Matrix4(T data[4][4]) : data {0}
+    constexpr explicit Matrix4(T data[4][4]) : data {0}
     {
         this->data[0][0] = data[0][0]; this->data[0][1] = data[0][1]; this->data[0][2] = data[0][2]; this->data[0][3] = data[0][3];
         this->data[1][0] = data[1][0]; this->data[1][1] = data[1][1]; this->data[1][2] = data[1][2]; this->data[1][3] = data[1][3];
@@ -24,7 +25,7 @@ public:
         this->data[3][0] = data[3][0]; this->data[3][1] = data[3][1]; this->data[3][2] = data[3][2]; this->data[3][3] = data[3][3];
     };
 
-    Matrix4<T> operator*(const Matrix4<T>& other)
+    constexpr Matrix4<T> operator*(const Matrix4<T>& other)
     {
         Matrix4<T> result;
 
@@ -51,7 +52,7 @@ public:
         return result;
     }
 
-    Vector4<T> operator*(const Vector4<T>& other)
+    constexpr Vector4<T> operator*(const Vector4<T>& other)
     {
         Vector4<T> result;
 
@@ -63,7 +64,7 @@ public:
         return result;
     }
 
-    static Matrix4<T> Identity()
+    constexpr static Matrix4<T> Identity()
     {
         Matrix4<T> result;
 
@@ -75,7 +76,7 @@ public:
         return result;
     }
 
-    static Matrix4<T> Translation(const Vector3<T>& translation)
+    constexpr static Matrix4<T> Translation(const Vector3<T>& translation)
     {
         Matrix4<T> result = Matrix4<T>::Identity();
 
@@ -86,9 +87,9 @@ public:
         return result;
     }
 
-    static Matrix4<T> Translation(T x, T y, T z) { return Translation(Vector3<T>(x, y, z)); }
+    constexpr static Matrix4<T> Translation(T x, T y, T z) { return Translation(Vector3<T>(x, y, z)); }
 
-    static Matrix4<T> Rotation(const Vector3<T>& rotation)
+    constexpr static Matrix4<T> Rotation(const Vector3<T>& rotation)
     {
         Matrix4<T> rx = Matrix4<T>::Identity();
         Matrix4<T> ry = Matrix4<T>::Identity();
@@ -116,9 +117,9 @@ public:
         return rz * ry * rx;
     }
 
-    static Matrix4<T> Rotation(T x, T y, T z) { return Rotation(Vector3<T>(x, y, z)); }
+    constexpr static Matrix4<T> Rotation(T x, T y, T z) { return Rotation(Vector3<T>(x, y, z)); }
 
-    static Matrix4<T> Rotation(const Vector3<T>& axis, T angle)
+    constexpr static Matrix4<T> Rotation(const Vector3<T>& axis, T angle)
     {
         Matrix4<T> result = Matrix4<T>::Identity();
 
@@ -141,7 +142,7 @@ public:
         return result;
     }
 
-    static Matrix4<T> Scale(const Vector3<T>& scale)
+    constexpr static Matrix4<T> Scale(const Vector3<T>& scale)
     {
         Matrix4<T> result = Matrix4<T>::Identity();
 
@@ -152,7 +153,7 @@ public:
         return result;
     }
 
-    static Matrix4<T> PerspectiveProjection(T fov, T aspectRatio, T near, T far)
+    constexpr static Matrix4<T> PerspectiveProjection(T fov, T aspectRatio, T near, T far)
     {
         Matrix4<T> result = Matrix4<T>::Identity();
 
@@ -167,20 +168,9 @@ public:
         result.data[3][3] = 0;
 
         return result;
-
-        /*T f = 1.0f / std::tan(fov * M_PI / 360.0f);
-
-        result.data[0][0] = f / aspectRatio;
-        result.data[1][1] = f;
-        result.data[2][2] = (far + near) / (near - far);
-        result.data[2][3] = -1;
-        result.data[3][2] = (2 * far * near) / (near - far);
-        result.data[3][3] = 0;
-
-        return result;*/
     }
 
-    static Matrix4<T> OrthographicProjection(T left, T right, T bottom, T top, T near, T far)
+    constexpr static Matrix4<T> OrthographicProjection(T left, T right, T bottom, T top, T near, T far)
     {
         Matrix4<T> result = Matrix4<T>::Identity();
 
@@ -194,7 +184,7 @@ public:
         return result;
     }
 
-    static Matrix4<T> LookAt(const Vector3<T>& eye, const Vector3<T>& center, const Vector3<T>& up)
+    constexpr static Matrix4<T> LookAt(const Vector3<T>& eye, const Vector3<T>& center, const Vector3<T>& up)
     {
         Vector3<T> f = (center - eye).Normalize();
         Vector3<T> s = up.Cross(f).Normalize();

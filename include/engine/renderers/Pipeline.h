@@ -28,18 +28,22 @@ enum class PrimitiveTopology : uint8_t
 };
 
 
-// TODO: support multiple vertex types (reflection ?, vertex buffer base ?)
-template<typename T>
 class Pipeline
 {
 public:
+    Pipeline() = default;
     virtual ~Pipeline() = default;
+
+    Pipeline(const Pipeline& other) = delete;
+    Pipeline(Pipeline&& other) = delete;
+    Pipeline& operator=(const Pipeline& other) = delete;
+    Pipeline& operator=(Pipeline&& other) = delete;
 
     virtual void Bind() = 0;
     virtual void Unbind() = 0;
 
     virtual void SetViewport(const Vector2<uint32_t>& pos, const Vector2<uint32_t>& size) = 0;
-    virtual void SetScissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
+    virtual void SetScissor(const Vector2<uint32_t>& pos, const Vector2<uint32_t>& size) = 0;
 
     virtual void SetVertexShader(const std::shared_ptr<Shader>& shader) = 0;
     virtual void SetTessellationControlShader(const std::shared_ptr<Shader>& shader) = 0;
@@ -65,27 +69,16 @@ public:
 
     virtual void Render() = 0;
 
+    template <typename T>
     inline void SetVertexBuffer(const std::shared_ptr<VertexBuffer<T>>& vertexBuffer)
     {
-        m_vertexBuffer = vertexBuffer;
-        SetVertexBuffer();
+        SetVertexBuffer(vertexBuffer->m_base, T::GetLayout());
     }
 
-    inline void SetIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer)
-    {
-        m_indexBuffer = indexBuffer;
-        SetIndexBuffer();
-    }
-
-    [[nodiscard]] inline const std::shared_ptr<VertexBuffer<T>>& GetVertexBuffer() const { return m_vertexBuffer; }
-    [[nodiscard]] inline const std::shared_ptr<IndexBuffer>& GetIndexBuffer() const { return m_indexBuffer; }
+    virtual void SetIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer) = 0;
 
 protected:
-    virtual void SetVertexBuffer() = 0;
-    virtual void SetIndexBuffer() = 0;
-
-    std::shared_ptr<VertexBuffer<T>> m_vertexBuffer;
-    std::shared_ptr<IndexBuffer> m_indexBuffer;
+    virtual void SetVertexBuffer(const std::shared_ptr<VertexBufferBase>& vertexBuffer, const VertexBufferLayout& layout) = 0;
 };
 
 }

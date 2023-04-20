@@ -24,6 +24,7 @@ Shader::Shader(ShaderType type) : m_type(type)
         break;
     case ShaderType::ShaderType_Compute:m_id = glCreateShader(GL_COMPUTE_SHADER);
         break;
+    default:throw std::runtime_error("Invalid shader type");
     }
 }
 

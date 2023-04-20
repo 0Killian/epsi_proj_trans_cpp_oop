@@ -6,7 +6,6 @@
 
 #include <utility>
 
-#include "VertexBufferLayout.h"
 #include "Renderer.h"
 #include "engine/renderers/Mapping.h"
 #include "VertexBufferBase.h"
@@ -32,6 +31,7 @@ public:
 
 protected:
     friend Mapping<VertexBuffer, T>;
+    friend class Pipeline;
 
     void Unmap() { m_base->Unmap(); }
 

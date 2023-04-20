@@ -6,19 +6,16 @@
 namespace Engine::OpenGL
 {
 
-IndexBuffer::IndexBuffer(IndexBufferUsage usage)
-    : m_usage(usage)
+IndexBuffer::IndexBuffer(IndexBufferUsage usage) : m_usage(usage)
 {
-    glGenBuffers(1, &m_id);
+    glCreateBuffers(1, &m_id);
 
 #ifdef DEBUG
-    if(m_id == 0)
-        throw std::runtime_error("Failed to create OpenGL index buffer.");
+    if(m_id == 0) throw std::runtime_error("Failed to create OpenGL index buffer.");
 #endif
 }
 
-IndexBuffer::IndexBuffer(IndexBufferUsage usage, const uint32_t* indices, size_t count)
-    : IndexBuffer(usage)
+IndexBuffer::IndexBuffer(IndexBufferUsage usage, const uint32_t* indices, size_t count) : IndexBuffer(usage)
 {
     SetData(indices, count);
 }
@@ -46,19 +43,17 @@ void IndexBuffer::Unbind()
 
 void IndexBuffer::SetData(const uint32_t* indices, size_t count)
 {
-    Bind();
-
     switch(m_usage)
     {
         case IndexBufferUsage::IndexBufferUsage_Static:
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLintptr>(count * sizeof(uint32_t)), indices, GL_STATIC_DRAW);
-        break;
+            glNamedBufferData(m_id, static_cast<GLintptr>(count * sizeof(uint32_t)), indices, GL_STATIC_DRAW);
+            break;
         case IndexBufferUsage::IndexBufferUsage_Dynamic:
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLintptr>(count * sizeof(uint32_t)), indices, GL_DYNAMIC_DRAW);
-        break;
+            glNamedBufferData(m_id, static_cast<GLintptr>(count * sizeof(uint32_t)), indices, GL_DYNAMIC_DRAW);
+            break;
         case IndexBufferUsage::IndexBufferUsage_Stream:
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLintptr>(count * sizeof(uint32_t)), indices, GL_STREAM_DRAW);
-        break;
+            glNamedBufferData(m_id, static_cast<GLintptr>(count * sizeof(uint32_t)), indices, GL_STREAM_DRAW);
+            break;
     }
 
     m_count = count;
@@ -66,21 +61,14 @@ void IndexBuffer::SetData(const uint32_t* indices, size_t count)
 
 void IndexBuffer::UpdateData(const uint32_t* data, size_t count, size_t offset)
 {
-    Bind();
-
 #ifdef DEBUG
-    if(offset + count > m_count)
-        throw std::runtime_error("Trying to update data outside of the OpenGL index buffer.");
-
-    if(m_mapped)
-        throw std::runtime_error("Trying to update an OpenGL index buffer that is still mapped.");
-
-    if(data == nullptr)
-        throw std::runtime_error("Trying to update an OpenGL index buffer with a null pointer.");
+    if(offset + count > m_count) throw std::runtime_error("Trying to update data outside of the OpenGL index buffer.");
+    if(m_mapped) throw std::runtime_error("Trying to update an OpenGL index buffer that is still mapped.");
+    if(data == nullptr) throw std::runtime_error("Trying to update an OpenGL index buffer with a null pointer.");
 #endif
 
-    glBufferSubData(
-        GL_ELEMENT_ARRAY_BUFFER,
+    glNamedBufferSubData(
+        m_id,
         static_cast<GLintptr>(offset * sizeof(uint32_t)),
         static_cast<GLintptr>(count * sizeof(uint32_t)),
         data
@@ -89,21 +77,15 @@ void IndexBuffer::UpdateData(const uint32_t* data, size_t count, size_t offset)
 
 [[nodiscard]] Mapping<Engine::IndexBuffer, uint32_t> IndexBuffer::Map(size_t offset, size_t count)
 {
-    Bind();
-
-    if(count == 0)
-        count = m_count;
+    if(count == 0) count = m_count;
 
 #ifdef DEBUG
-    if(offset + count > m_count)
-        throw std::runtime_error("Trying to map data outside of the OpenGL index buffer.");
-
-    if(m_mapped)
-        throw std::runtime_error("Trying to map an OpenGL index buffer that is already mapped.");
+    if(offset + count > m_count) throw std::runtime_error("Trying to map data outside of the OpenGL index buffer.");
+    if(m_mapped) throw std::runtime_error("Trying to map an OpenGL index buffer that is already mapped.");
 #endif
 
-    auto* data = reinterpret_cast<uint32_t*>(glMapBufferRange(
-        GL_ELEMENT_ARRAY_BUFFER,
+    auto* data = reinterpret_cast<uint32_t*>(glMapNamedBufferRange(
+        m_id,
         static_cast<GLintptr>(offset * sizeof(uint32_t)),
         static_cast<GLintptr>(count * sizeof(uint32_t)),
         GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT
@@ -115,27 +97,22 @@ void IndexBuffer::UpdateData(const uint32_t* data, size_t count, size_t offset)
 IndexBuffer::~IndexBuffer()
 {
 #ifdef DEBUG
-    if(m_id == 0)
-        spdlog::error("Trying to delete an already deleted OpenGL VertexBuffer");
-
-    if(m_mapped)
-        spdlog::error("Trying to delete an OpenGL VertexBuffer that is still mapped");
+    if(m_id == 0) spdlog::error("Trying to delete an already deleted OpenGL VertexBuffer");
+    if(m_mapped) spdlog::error("Trying to delete an OpenGL VertexBuffer that is still mapped");
 #endif
+
     glDeleteBuffers(1, &m_id);
 }
 
 void IndexBuffer::Unmap()
 {
-    Bind();
-    glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+    glUnmapNamedBuffer(m_id);
 }
 
-IndexBuffer::IndexBuffer(IndexBufferUsage usage, uint32_t id)
-    : m_usage(usage), m_id(id)
+IndexBuffer::IndexBuffer(IndexBufferUsage usage, uint32_t id) : m_usage(usage), m_id(id)
 {
 #ifdef DEBUG
-    if(m_id == 0)
-        throw std::runtime_error("Trying to create an OpenGL index buffer with an id of 0.");
+    if(m_id == 0) throw std::runtime_error("Trying to create an OpenGL index buffer with an id of 0.");
 #endif
 }
 

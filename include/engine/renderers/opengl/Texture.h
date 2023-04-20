@@ -16,10 +16,9 @@ public:
     ~Texture() override;
 
     Texture(const Texture& other) = delete;
+    Texture(Texture&& other) noexcept = delete;
     Texture& operator=(const Texture& other) = delete;
-
-    Texture(Texture&& other) noexcept;
-    Texture& operator=(Texture&& other) noexcept;
+    Texture& operator=(Texture&& other) noexcept = delete;
 
     static std::vector<std::shared_ptr<Engine::Texture>> CreateTextures(size_t count);
 
@@ -30,10 +29,9 @@ public:
 
 private:
     explicit Texture(uint32_t id);
+    void Init();
 
     uint32_t m_id = 0;
-
-    static uint32_t s_boundId;
 };
 
 }

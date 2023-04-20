@@ -120,8 +120,7 @@ std::shared_ptr<Shader> CreateShader(const std::shared_ptr<Renderer>& renderer, 
     }
 }
 
-template<typename T>
-std::shared_ptr<Pipeline<T>>
+std::shared_ptr<Pipeline>
 CreatePipeline(
         const std::shared_ptr<Renderer>& renderer,
         Vector2<uint32_t> viewportPos,
@@ -133,8 +132,10 @@ CreatePipeline(
     switch (renderer->GetAPI())
     {
     case RendererAPI::RendererAPI_OpenGL:
-        return std::make_shared<OpenGL::Pipeline<T>>(viewportPos, viewportSize, scissorsPos, scissorsSize,
-                                                     primitiveTopology);
+        return std::make_shared<OpenGL::Pipeline>(
+                viewportPos, viewportSize,
+                scissorsPos, scissorsSize,
+                primitiveTopology);
     case RendererAPI::RendererAPI_Vulkan:
         //return std::make_shared<Vulkan::Pipeline>();
         throw std::runtime_error("Vulkan::Pipeline::CreatePipeline() is not implemented yet.");

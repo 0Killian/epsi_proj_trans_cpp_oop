@@ -74,7 +74,7 @@ std::string ShaderBaseTypeToString(ShaderBaseType type)
 
 VertexBufferBase::VertexBufferBase(VertexBufferUsage usage) : m_usage(usage)
 {
-    glGenBuffers(1, &m_id);
+    glCreateBuffers(1, &m_id);
 
 #ifdef DEBUG
     if(m_id == 0) throw std::runtime_error("Failed to create OpenGL VertexBuffer");
@@ -86,7 +86,7 @@ std::vector<std::shared_ptr<Engine::VertexBufferBase>> VertexBufferBase::CreateV
     // TODO: profile multiple vertex buffer creation vs one by one
     std::vector<std::shared_ptr<Engine::VertexBufferBase>> buffers(count);
     std::vector<uint32_t> ids(count);
-    glGenBuffers(count, ids.data());
+    glCreateBuffers(count, ids.data());
     std::transform(ids.begin(), ids.end(), buffers.begin(), [&](uint32_t id)
     { return std::shared_ptr<Engine::VertexBufferBase>(new VertexBufferBase(usage, id)); });
 
@@ -110,13 +110,13 @@ void VertexBufferBase::SetData(const void* data, size_t size)
     switch(m_usage)
     {
     case VertexBufferUsage::VertexBufferUsage_Static:
-        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, GL_STATIC_DRAW);
+        glNamedBufferData(m_id, static_cast<GLsizeiptr>(size), data, GL_STATIC_DRAW);
         break;
     case VertexBufferUsage::VertexBufferUsage_Dynamic:
-        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, GL_DYNAMIC_DRAW);
+        glNamedBufferData(m_id, static_cast<GLsizeiptr>(size), data, GL_DYNAMIC_DRAW);
         break;
     case VertexBufferUsage::VertexBufferUsage_Stream:
-        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, GL_STREAM_DRAW);
+        glNamedBufferData(m_id, static_cast<GLsizeiptr>(size), data, GL_STREAM_DRAW);
         break;
     }
 }
@@ -125,42 +125,36 @@ void VertexBufferBase::UpdateData(const void* data, size_t size, size_t offset)
 {
     if(size == 0) return;
 
-    Bind();
-
 #ifdef DEBUG
     GLint bufferSize;
-    glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+    glGetNamedBufferParameteriv(m_id, GL_BUFFER_SIZE, &bufferSize);
 
     if(offset + size > bufferSize) throw std::runtime_error("Trying to update data outside of the buffer");
     if(m_mapped) throw std::runtime_error("Trying to update data while the buffer is mapped");
     if(data == nullptr) throw std::runtime_error("Trying to update data with a null pointer");
 #endif
 
-    glBufferSubData(GL_ARRAY_BUFFER, static_cast<GLintptr>(offset), static_cast<GLsizeiptr>(size), data);
+    glNamedBufferSubData(m_id, static_cast<GLintptr>(offset), static_cast<GLsizeiptr>(size), data);
 }
 
 void* VertexBufferBase::Map(size_t offset, size_t size)
 {
-    Bind();
 
     GLint bufferSize;
-    glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+    glGetNamedBufferParameteriv(m_id, GL_BUFFER_SIZE, &bufferSize);
 
-    if(size == 0)
-    {
-        size = bufferSize;
-    }
+    if(size == 0) size = bufferSize;
 
 #ifdef DEBUG
     if(offset + size > bufferSize) throw std::runtime_error("Trying to update data outside of the buffer");
     if(m_mapped) throw std::runtime_error("Trying to map data while the buffer is mapped");
 #endif
 
-    void* data = glMapBufferRange(
-            GL_ARRAY_BUFFER,
-            static_cast<GLintptr>(offset),
-            static_cast<GLint>(size),
-            GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT
+    void* data = glMapNamedBufferRange(
+        m_id,
+        static_cast<GLintptr>(offset),
+        static_cast<GLint>(size),
+        GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT
     );
 
     m_mapped = true;
@@ -179,8 +173,7 @@ VertexBufferBase::~VertexBufferBase()
 
 void VertexBufferBase::Unmap()
 {
-    Bind();
-    glUnmapBuffer(GL_ARRAY_BUFFER);
+    glUnmapNamedBuffer(m_id);
     m_mapped = false;
 }
 

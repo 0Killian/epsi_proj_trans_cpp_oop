@@ -16,14 +16,14 @@ public:
     T data[3][3];
 
     constexpr Matrix3() : data{0} {}
-    constexpr Matrix3(T data[3][3])
+    constexpr explicit Matrix3(T data[3][3])
     {
         this->data[0][0] = data[0][0]; this->data[0][1] = data[0][1]; this->data[0][2] = data[0][2];
         this->data[1][0] = data[1][0]; this->data[1][1] = data[1][1]; this->data[1][2] = data[1][2];
         this->data[2][0] = data[2][0]; this->data[2][1] = data[2][1]; this->data[2][2] = data[2][2];
     }
 
-    Matrix3<T> operator*(const Matrix3<T>& other) const
+    constexpr Matrix3<T> operator*(const Matrix3<T>& other) const
     {
         Matrix3<T> result;
 
@@ -42,7 +42,7 @@ public:
         return result;
     }
 
-    Vector3<T> operator*(const Vector3<T>& other) const
+    constexpr Vector3<T> operator*(const Vector3<T>& other) const
     {
         Vector3<T> result;
 
@@ -53,7 +53,7 @@ public:
         return result;
     }
 
-    static Matrix3<T> Identity()
+    constexpr static Matrix3<T> Identity()
     {
         Matrix3<T> result;
 

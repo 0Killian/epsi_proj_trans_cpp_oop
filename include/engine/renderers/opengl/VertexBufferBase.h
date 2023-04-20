@@ -11,6 +11,8 @@
 namespace Engine::OpenGL
 {
 
+class Pipeline;
+
 GLenum ShaderBaseTypeToOpenGLBaseType(ShaderBaseType type);
 ShaderBaseType OpenGLBaseTypeToShaderBaseType(GLenum type);
 std::string ShaderBaseTypeToString(ShaderBaseType type);
@@ -22,14 +24,10 @@ public:
 
     VertexBufferBase(const VertexBufferBase& other) = delete;
     VertexBufferBase(VertexBufferBase&& other) noexcept = delete;
-
     VertexBufferBase& operator=(const VertexBufferBase& other) = delete;
     VertexBufferBase& operator=(VertexBufferBase&& other) noexcept = delete;
 
     static std::vector<std::shared_ptr<Engine::VertexBufferBase>> CreateVertexBuffers(VertexBufferUsage usage, int count);
-
-    void Bind() override;
-    void Unbind() override;
 
     void SetData(const void* data, size_t size) override;
     void UpdateData(const void* data, size_t size, size_t offset) override;
@@ -39,6 +37,10 @@ public:
     ~VertexBufferBase() override;
 
 protected:
+    friend class OpenGL::Pipeline;
+
+    void Bind() override;
+    void Unbind() override;
     void Unmap() override;
 
 private:
