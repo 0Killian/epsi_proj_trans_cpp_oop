@@ -48,109 +48,88 @@ Pipeline::~Pipeline()
 
 void Pipeline::Bind()
 {
-    if(m_shouldLink)
-    {
-        if (m_vertexShader) glAttachShader(m_programId, m_vertexShader->m_id);
-        if (m_tessellationControlShader) glAttachShader(m_programId, m_tessellationControlShader->m_id);
-        if (m_tessellationEvaluationShader) glAttachShader(m_programId, m_tessellationEvaluationShader->m_id);
-        if (m_geometryShader) glAttachShader(m_programId, m_geometryShader->m_id);
-        if (m_fragmentShader) glAttachShader(m_programId, m_fragmentShader->m_id);
-        if (m_computeShader) glAttachShader(m_programId, m_computeShader->m_id);
-
-        glLinkProgram(m_programId);
-
-        if (m_vertexShader) glDetachShader(m_programId, m_vertexShader->m_id);
-        if (m_tessellationControlShader) glDetachShader(m_programId, m_tessellationControlShader->m_id);
-        if (m_tessellationEvaluationShader) glDetachShader(m_programId, m_tessellationEvaluationShader->m_id);
-        if (m_geometryShader) glDetachShader(m_programId, m_geometryShader->m_id);
-        if (m_fragmentShader) glDetachShader(m_programId, m_fragmentShader->m_id);
-        if (m_computeShader) glDetachShader(m_programId, m_computeShader->m_id);
-
-        GLint isLinked = 0;
-        glGetProgramiv(m_programId, GL_LINK_STATUS, &isLinked);
-        if (isLinked == GL_FALSE)
-        {
-            GLint maxLength = 0;
-            glGetProgramiv(m_programId, GL_INFO_LOG_LENGTH, &maxLength);
-
-            std::vector<GLchar> infoLog(maxLength);
-            glGetProgramInfoLog(m_programId, maxLength, &maxLength, infoLog.data());
-
-            throw std::runtime_error(std::string(infoLog.begin(), infoLog.end()));
-        }
-
-#ifdef DEBUG
-        glValidateProgram(m_programId);
-
-        GLint maxLength = 0;
-        glGetProgramiv(m_programId, GL_INFO_LOG_LENGTH, &maxLength);
-
-        std::vector<GLchar> infoLog(maxLength);
-        glGetProgramInfoLog(m_programId, maxLength, &maxLength, infoLog.data());
-
-        GLint isValid = 0;
-        glGetProgramiv(m_programId, GL_VALIDATE_STATUS, &isValid);
-        if (isValid == GL_FALSE)
-        {
-            throw std::runtime_error(std::string(infoLog.begin(), infoLog.end()));
-        }
-#endif
-
-        m_shouldLink = false;
-        if(m_linked) m_shouldUpdateBindings = true;
-        m_linked = true;
-    }
+    if(m_shouldLink) LinkShaders();
 
     glUseProgram(m_programId);
     glBindVertexArray(m_vertexArrayId);
     glViewport(m_viewportPos.x, m_viewportPos.y, m_viewportSize.x, m_viewportSize.y);
     glScissor(m_scissorsPos.x, m_scissorsPos.y, m_scissorsSize.x, m_scissorsSize.y);
 
+    if(m_shouldUpdateUniforms) UpdateUniforms();
+    if(m_shouldUpdateInputs) UpdateInputs();
+}
 
-    if(m_shouldUpdateBindings)
+void Pipeline::LinkShaders()
+{
+    if (m_vertexShader) glAttachShader(m_programId, m_vertexShader->m_id);
+    if (m_tessellationControlShader) glAttachShader(m_programId, m_tessellationControlShader->m_id);
+    if (m_tessellationEvaluationShader) glAttachShader(m_programId, m_tessellationEvaluationShader->m_id);
+    if (m_geometryShader) glAttachShader(m_programId, m_geometryShader->m_id);
+    if (m_fragmentShader) glAttachShader(m_programId, m_fragmentShader->m_id);
+    if (m_computeShader) glAttachShader(m_programId, m_computeShader->m_id);
+
+    glLinkProgram(m_programId);
+
+    if (m_vertexShader) glDetachShader(m_programId, m_vertexShader->m_id);
+    if (m_tessellationControlShader) glDetachShader(m_programId, m_tessellationControlShader->m_id);
+    if (m_tessellationEvaluationShader) glDetachShader(m_programId, m_tessellationEvaluationShader->m_id);
+    if (m_geometryShader) glDetachShader(m_programId, m_geometryShader->m_id);
+    if (m_fragmentShader) glDetachShader(m_programId, m_fragmentShader->m_id);
+    if (m_computeShader) glDetachShader(m_programId, m_computeShader->m_id);
+
+    GLint isLinked = 0;
+    glGetProgramiv(m_programId, GL_LINK_STATUS, &isLinked);
+    if (isLinked == GL_FALSE)
     {
-        glBindVertexArray(m_vertexArrayId);
-        this->m_vertexBufferBase->Bind();
-        this->m_indexBuffer->Bind();
+        GLint maxLength = 0;
+        glGetProgramiv(m_programId, GL_INFO_LOG_LENGTH, &maxLength);
 
-        glGetProgramInterfaceiv(m_programId, GL_UNIFORM, GL_ACTIVE_RESOURCES, &m_uniformCount);
-        glGetProgramInterfaceiv(m_programId, GL_PROGRAM_INPUT, GL_ACTIVE_RESOURCES, &m_inputCount);
+        std::vector<GLchar> infoLog(maxLength);
+        glGetProgramInfoLog(m_programId, maxLength, &maxLength, infoLog.data());
 
-        glGetProgramInterfaceiv(m_programId, GL_UNIFORM, GL_MAX_NAME_LENGTH, &m_maxUniformNameSize);
-        glGetProgramInterfaceiv(m_programId, GL_PROGRAM_INPUT, GL_MAX_NAME_LENGTH, &m_maxInputNameSize);
+        throw std::runtime_error(std::string(infoLog.begin(), infoLog.end()));
+    }
 
-        m_uniformNameBuffer.clear();
-        m_uniformNameBuffer.resize(m_maxUniformNameSize);
+#ifdef DEBUG
+    glValidateProgram(m_programId);
 
-        m_inputNameBuffer.clear();
-        m_inputNameBuffer.resize(m_maxInputNameSize);
+    GLint maxLength = 0;
+    glGetProgramiv(m_programId, GL_INFO_LOG_LENGTH, &maxLength);
 
-        m_inputNames.clear();
-        for(auto& element : m_layout.GetElements())
-        {
-            if(element.type == ShaderBaseType::ShaderBaseType_Texture)
-                throw std::runtime_error("Texture type is not supported in vertex buffer layout.");
+    std::vector<GLchar> infoLog(maxLength);
+    glGetProgramInfoLog(m_programId, maxLength, &maxLength, infoLog.data());
 
-            m_inputNames.emplace_back(element.name);
-        }
+    GLint isValid = 0;
+    glGetProgramiv(m_programId, GL_VALIDATE_STATUS, &isValid);
+    if (isValid == GL_FALSE)
+    {
+        throw std::runtime_error(std::string(infoLog.begin(), infoLog.end()));
+    }
+#endif
 
-        for(auto& i : m_boundAttributeLocations)
-        {
-            glDisableVertexAttribArray(i);
-        }
+    m_shouldLink = false;
+    UpdateUniforms();
+    if(m_vertexBufferBase) UpdateInputs();
+}
 
-        m_boundAttributeLocations.clear();
+void Pipeline::UpdateUniforms()
+{
+    glGetProgramInterfaceiv(m_programId, GL_UNIFORM, GL_ACTIVE_RESOURCES, &m_uniformCount);
+    glGetProgramInterfaceiv(m_programId, GL_UNIFORM, GL_MAX_NAME_LENGTH, &m_maxUniformNameSize);
 
-        m_uniforms.clear();
+    m_uniformNameBuffer.clear();
+    m_uniformNameBuffer.resize(m_maxUniformNameSize);
 
-        for(int i = 0; i < m_uniformCount; i++)
-        {
-            static const GLenum properties[] = { GL_TYPE, GL_ARRAY_SIZE, GL_LOCATION };
+    m_uniforms.clear();
+
+    for(int i = 0; i < m_uniformCount; i++)
+    {
+        static const GLenum properties[] = { GL_TYPE, GL_ARRAY_SIZE, GL_LOCATION };
 #pragma pack(push, 1)
-            struct { GLint type; GLint arraySize; GLint location; } results = {};
+        struct { GLint type; GLint arraySize; GLint location; } results = {};
 #pragma pack(pop)
 
-            glGetProgramResourceiv(
+        glGetProgramResourceiv(
                 m_programId,
                 GL_UNIFORM,
                 i,
@@ -159,35 +138,70 @@ void Pipeline::Bind()
                 sizeof(results) / sizeof(GLint),
                 nullptr,
                 reinterpret_cast<GLint*>(&results)
-            );
+        );
 
-            glGetProgramResourceName(
+        glGetProgramResourceName(
                 m_programId,
                 GL_UNIFORM,
                 i,
                 m_maxUniformNameSize,
                 nullptr,
                 m_uniformNameBuffer.data()
-            );
+        );
 
-            m_uniforms.emplace_back(
+        m_uniforms.emplace_back(
                 m_uniformNameBuffer.data(),
                 results.location,
                 OpenGLBaseTypeToShaderBaseType(results.type),
                 results.arraySize
-            );
-        }
+        );
+    }
 
-        std::vector<VertexBufferLayout::Element> elements = m_layout.GetElements();
+    m_shouldUpdateUniforms = false;
+}
 
-        for(int i = 0; i < m_inputCount; i++)
-        {
-            static const GLenum properties[] = { GL_TYPE, GL_ARRAY_SIZE, GL_LOCATION, };
+void Pipeline::UpdateInputs()
+{
+#ifdef DEBUG
+    if (!m_vertexBufferBase) throw std::runtime_error("Vertex buffer is not set.");
+#endif
+
+    glBindVertexArray(m_vertexArrayId);
+    this->m_vertexBufferBase->Bind();
+    this->m_indexBuffer->Bind();
+
+    glGetProgramInterfaceiv(m_programId, GL_PROGRAM_INPUT, GL_ACTIVE_RESOURCES, &m_inputCount);
+    glGetProgramInterfaceiv(m_programId, GL_PROGRAM_INPUT, GL_MAX_NAME_LENGTH, &m_maxInputNameSize);
+
+    m_inputNameBuffer.clear();
+    m_inputNameBuffer.resize(m_maxInputNameSize);
+
+    m_inputNames.clear();
+    for(auto& element : m_layout.GetElements())
+    {
+        if(element.type == ShaderBaseType::ShaderBaseType_Texture)
+            throw std::runtime_error("Texture type is not supported in vertex buffer layout.");
+
+        m_inputNames.emplace_back(element.name);
+    }
+
+    for(auto& i : m_boundAttributeLocations)
+    {
+        glDisableVertexAttribArray(i);
+    }
+
+    m_boundAttributeLocations.clear();
+
+    std::vector<VertexBufferLayout::Element> elements = m_layout.GetElements();
+
+    for(int i = 0; i < m_inputCount; i++)
+    {
+        static const GLenum properties[] = { GL_TYPE, GL_ARRAY_SIZE, GL_LOCATION, };
 #pragma pack(push, 1)
-            struct { GLint type; GLint arraySize; GLint location; } results = {};
+        struct { GLint type; GLint arraySize; GLint location; } results = {};
 #pragma pack(pop)
 
-            glGetProgramResourceiv(
+        glGetProgramResourceiv(
                 m_programId,
                 GL_PROGRAM_INPUT,
                 i,
@@ -196,86 +210,80 @@ void Pipeline::Bind()
                 sizeof(results) / sizeof(GLint),
                 nullptr,
                 reinterpret_cast<GLint*>(&results)
-            );
+        );
 
-            glGetProgramResourceName(
+        glGetProgramResourceName(
                 m_programId,
                 GL_PROGRAM_INPUT,
                 i,
                 m_maxInputNameSize,
                 nullptr,
                 m_inputNameBuffer.data()
-            );
+        );
 
-            bool found = false;
-            for(int j = 0; j < m_inputCount; j++)
+        bool found = false;
+        for(int j = 0; j < m_inputCount; j++)
+        {
+            if(std::strcmp(m_inputNames[j].data(), m_inputNameBuffer.data()) == 0)
             {
-                if(std::strcmp(m_inputNames[j].data(), m_inputNameBuffer.data()) == 0)
+                auto& element = m_layout.GetElements()[j];
+
+                if(element.type != OpenGLBaseTypeToShaderBaseType(results.type))
                 {
-                    auto& element = m_layout.GetElements()[j];
+                    std::stringstream error;
+                    error << "Incorrect buffer layout: " << std::endl;
+                    error << "  Input " << m_inputNameBuffer.data() << " (at location " << results.location << ") has incorrect type" << std::endl;
+                    error << "  Expected " << ShaderBaseTypeToString(OpenGLBaseTypeToShaderBaseType(results.type))
+                          << " but got " << ShaderBaseTypeToString(element.type) << std::endl;
+                    throw std::runtime_error(error.str());
+                }
 
-                    if(element.type != OpenGLBaseTypeToShaderBaseType(results.type))
-                    {
-                        std::stringstream error;
-                        error << "Incorrect buffer layout: " << std::endl;
-                        error << "  Input " << m_inputNameBuffer.data() << " (at location " << results.location << ") has incorrect type" << std::endl;
-                        error << "  Expected " << ShaderBaseTypeToString(OpenGLBaseTypeToShaderBaseType(results.type))
-                              << " but got " << ShaderBaseTypeToString(element.type) << std::endl;
-                        throw std::runtime_error(error.str());
-                    }
-
-                    glEnableVertexAttribArray(results.location);
-                    // TODO: https://www.khronos.org/opengl/wiki/Vertex_Specification#Separate_attribute_format
-                    glVertexAttribPointer(
+                glEnableVertexAttribArray(results.location);
+                // TODO: https://www.khronos.org/opengl/wiki/Vertex_Specification#Separate_attribute_format
+                glVertexAttribPointer(
                         results.location,
                         static_cast<GLint>(element.componentCount),
                         OpenGL::ShaderBaseTypeToOpenGLBaseType(element.type),
                         element.normalized ? GL_TRUE : GL_FALSE,
                         static_cast<GLint>(m_layout.GetStride()),
                         reinterpret_cast<void*>(element.offset)
-                    );
+                );
 
-                    m_boundAttributeLocations.push_back(results.location);
-                    elements.erase(std::find(elements.begin(), elements.end(), element));
+                m_boundAttributeLocations.push_back(results.location);
+                elements.erase(std::find(elements.begin(), elements.end(), element));
 
-                    found = true;
-                    break;
-                }
-            }
-
-            if(!found)
-            {
-                std::stringstream error;
-                error << "Incorrect buffer layout: " << std::endl;
-                error << "  Input " << m_inputNameBuffer.data() << " (at location " << results.location << ") not found in layout" << std::endl;
-                error << "  This input is of type " << OpenGL::ShaderBaseTypeToString(OpenGL::OpenGLBaseTypeToShaderBaseType(results.type)) << " and has " << results.arraySize << " elements" << std::endl;
-                error << "Please check that the shader input declarations are correct, and they includes all the elements in the layout" << std::endl;
-                throw std::runtime_error(error.str());
+                found = true;
+                break;
             }
         }
 
-        if(!elements.empty())
+        if(!found)
         {
             std::stringstream error;
             error << "Incorrect buffer layout: " << std::endl;
-            error << "The following elements are not bound to any input:" << std::endl;
-            for(auto& element : elements)
-            {
-                error << "  " << element.name << " (" << OpenGL::ShaderBaseTypeToString(element.type) << ")" << std::endl;
-            }
-
+            error << "  Input " << m_inputNameBuffer.data() << " (at location " << results.location << ") not found in layout" << std::endl;
+            error << "  This input is of type " << OpenGL::ShaderBaseTypeToString(OpenGL::OpenGLBaseTypeToShaderBaseType(results.type)) << " and has " << results.arraySize << " elements" << std::endl;
             error << "Please check that the shader input declarations are correct, and they includes all the elements in the layout" << std::endl;
             throw std::runtime_error(error.str());
         }
-
-        m_shouldUpdateBindings = false;
-        m_bound = true;
     }
 
-    if(!m_bound)
+    if(!elements.empty())
     {
-        throw std::runtime_error("Failed to bind program");
+        std::stringstream error;
+        error << "Incorrect buffer layout: " << std::endl;
+        error << "The following elements are not bound to any input:" << std::endl;
+        for(auto& element : elements)
+        {
+            error << "  " << element.name << " (" << OpenGL::ShaderBaseTypeToString(element.type) << ")" << std::endl;
+        }
+
+        error << "Please check that the shader input declarations are correct, and they includes all the elements in the layout" << std::endl;
+        throw std::runtime_error(error.str());
     }
+
+    m_shouldUpdateInputs = false;
+    m_bound = true;
 }
 
 void Pipeline::Unbind()
@@ -342,6 +350,11 @@ void Pipeline::Render()
             throw std::runtime_error(error.str());
         }
     }
+
+    if(!m_bound)
+    {
+        throw std::runtime_error("Pipeline state is invalid. Have you set vertex and fragment shaders, and bound buffers?");
+    }
 #endif
 
     if(m_texture)
@@ -407,13 +420,12 @@ void Pipeline::SetVertexBuffer(
 {
     m_vertexBufferBase = std::dynamic_pointer_cast<OpenGL::VertexBufferBase>(vertexBufferBase);
     m_layout = layout;
-    m_shouldUpdateBindings = true;
+    m_shouldUpdateInputs = true;
 }
 
 void Pipeline::SetIndexBuffer(const std::shared_ptr<Engine::IndexBuffer> &indexBuffer)
 {
     m_indexBuffer = std::dynamic_pointer_cast<OpenGL::IndexBuffer>(indexBuffer);
-    m_shouldUpdateBindings = true;
 }
 
 Pipeline::Uniform* Pipeline::FindUniform(const std::string& name)

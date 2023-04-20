@@ -94,7 +94,10 @@ add_executable(HarvestHaven
         src/engine/Linux/Window.cpp
         src/engine/Linux/opengl/OpenGLRenderer.cpp
         src/engine/glad_glx.cpp
-        src/engine/renderers/opengl/Texture.cpp src/engine/stbi_impl.cpp)
+        src/engine/renderers/opengl/Texture.cpp
+        src/engine/stbi_impl.cpp
+        src/engine/renderers/Pipeline3D.cpp
+        src/engine/renderers/Pipeline3DTextured.cpp)
 
 target_include_directories(HarvestHaven PRIVATE include)
 target_include_directories(HarvestHaven PRIVATE ${Stb_INCLUDE_DIR})

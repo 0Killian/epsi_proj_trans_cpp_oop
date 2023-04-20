@@ -60,6 +60,8 @@ public:
     void SetUniform(const std::string& name, bool value) override;
     void SetUniform(const std::string& name, const std::shared_ptr<Engine::Texture>& value) override;
 
+    void LinkShaders() override;
+
 protected:
     void SetVertexBuffer(
             const std::shared_ptr<Engine::VertexBufferBase>& vertexBufferBase,
@@ -79,6 +81,9 @@ private:
 
     Uniform* FindUniform(const std::string& name);
 
+    void UpdateUniforms();
+    void UpdateInputs();
+
     uint32_t m_programId = 0;
     uint32_t m_vertexArrayId = 0;
 
@@ -95,8 +100,8 @@ private:
     std::shared_ptr<OpenGL::Shader> m_computeShader;
 
     bool m_shouldLink = false;
-    bool m_shouldUpdateBindings = false;
-    bool m_linked = false;
+    bool m_shouldUpdateUniforms = false;
+    bool m_shouldUpdateInputs = false;
     bool m_bound = false;
 
     GLint m_uniformCount = 0;

@@ -47,7 +47,7 @@ public:
         return 0;
     }
 
-    static size_t GetTypeComponentCount(ShaderBaseType type)
+    static constexpr size_t GetTypeComponentCount(ShaderBaseType type)
     {
         switch (type)
         {
@@ -75,7 +75,7 @@ public:
         size_t offset = 0;
         size_t componentCount;
 
-        Element(std::string name, ShaderBaseType type, bool normalized = false)
+        constexpr Element(std::string name, ShaderBaseType type, bool normalized = false)
             :
             type(type),
             normalized(normalized),
@@ -90,7 +90,7 @@ public:
         }
     };
 
-    VertexBufferLayout(std::initializer_list<Element> elements)
+    constexpr VertexBufferLayout(std::initializer_list<Element> elements)
             : m_elements(elements)
     {
         size_t offset = 0;

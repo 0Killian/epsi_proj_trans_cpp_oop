@@ -52,6 +52,8 @@ public:
     virtual void SetFragmentShader(const std::shared_ptr<Shader>& shader) = 0;
     virtual void SetComputeShader(const std::shared_ptr<Shader>& shader) = 0;
 
+    virtual void LinkShaders() = 0;
+
     virtual void SetUniform(const std::string& name, float value) = 0;
     virtual void SetUniform(const std::string& name, const Vector2<float>& value) = 0;
     virtual void SetUniform(const std::string& name, const Vector3<float>& value) = 0;

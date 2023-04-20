@@ -9,15 +9,15 @@
 #include "engine/renderers/opengl/Shader.h"
 #include "engine/renderers/opengl/Pipeline.h"
 #include "engine/renderers/opengl/Texture.h"
-
-//#include "renderers/vulkan/VertexBuffer.h"
-//#include "renderers/directx/VertexBuffer.h"
-//#include "renderers/metal/VertexBuffer.h"
+#include "engine/renderers/Pipeline3D.h"
+#include "engine/renderers/Pipeline3DTextured.h"
 
 namespace Engine
 {
+
 template<typename T>
-std::shared_ptr<VertexBuffer<T>> CreateVertexBuffer(const std::shared_ptr<Renderer>& renderer, VertexBufferUsage usage)
+inline std::shared_ptr<VertexBuffer<T>>
+CreateVertexBuffer(const std::shared_ptr<Renderer>& renderer, VertexBufferUsage usage)
 {
     switch (renderer->GetAPI())
     {
@@ -37,14 +37,14 @@ std::shared_ptr<VertexBuffer<T>> CreateVertexBuffer(const std::shared_ptr<Render
 }
 
 template<typename T>
-std::vector<std::shared_ptr<VertexBuffer<T>>>
+inline std::vector<std::shared_ptr<VertexBuffer<T>>>
 CreateVertexBuffers(const std::shared_ptr<Renderer>& renderer, VertexBufferUsage usage, size_t count)
 {
     switch (renderer->GetAPI())
     {
     case RendererAPI::RendererAPI_OpenGL:
     {
-        auto bufferBases = OpenGL::VertexBufferBase::CreateVertexBuffers(usage, count);
+        auto bufferBases = OpenGL::VertexBufferBase::CreateVertexBuffers(usage, static_cast<int>(count));
         std::vector<std::shared_ptr<VertexBuffer<T>>> buffers;
         buffers.reserve(bufferBases.size());
         for (auto &bufferBase: bufferBases)
@@ -65,7 +65,7 @@ CreateVertexBuffers(const std::shared_ptr<Renderer>& renderer, VertexBufferUsage
     }
 }
 
-std::shared_ptr<IndexBuffer> CreateIndexBuffer(const std::shared_ptr<Renderer>& renderer, IndexBufferUsage usage)
+inline std::shared_ptr<IndexBuffer> CreateIndexBuffer(const std::shared_ptr<Renderer>& renderer, IndexBufferUsage usage)
 {
     switch (renderer->GetAPI())
     {
@@ -83,7 +83,7 @@ std::shared_ptr<IndexBuffer> CreateIndexBuffer(const std::shared_ptr<Renderer>& 
     }
 }
 
-std::vector<std::shared_ptr<IndexBuffer>>
+inline std::vector<std::shared_ptr<IndexBuffer>>
 CreateIndexBuffers(const std::shared_ptr<Renderer>& renderer, IndexBufferUsage usage, size_t count)
 {
     switch (renderer->GetAPI())
@@ -102,7 +102,7 @@ CreateIndexBuffers(const std::shared_ptr<Renderer>& renderer, IndexBufferUsage u
     }
 }
 
-std::shared_ptr<Shader> CreateShader(const std::shared_ptr<Renderer>& renderer, ShaderType type)
+inline std::shared_ptr<Shader> CreateShader(const std::shared_ptr<Renderer>& renderer, ShaderType type)
 {
     switch (renderer->GetAPI())
     {
@@ -120,14 +120,14 @@ std::shared_ptr<Shader> CreateShader(const std::shared_ptr<Renderer>& renderer, 
     }
 }
 
-std::shared_ptr<Pipeline>
+inline std::shared_ptr<Pipeline>
 CreatePipeline(
-        const std::shared_ptr<Renderer>& renderer,
-        Vector2<uint32_t> viewportPos,
-        Vector2<uint32_t> viewportSize,
-        Vector2<uint32_t> scissorsPos,
-        Vector2<uint32_t> scissorsSize,
-        PrimitiveTopology primitiveTopology)
+    const std::shared_ptr<Renderer>& renderer,
+    Vector2<uint32_t> viewportPos,
+    Vector2<uint32_t> viewportSize,
+    Vector2<uint32_t> scissorsPos,
+    Vector2<uint32_t> scissorsSize,
+    PrimitiveTopology primitiveTopology)
 {
     switch (renderer->GetAPI())
     {
@@ -149,7 +149,7 @@ CreatePipeline(
     }
 }
 
-std::shared_ptr<Texture> CreateTexture(const std::shared_ptr<Renderer>& renderer)
+inline std::shared_ptr<Texture> CreateTexture(const std::shared_ptr<Renderer>& renderer)
 {
     switch(renderer->GetAPI())
     {
@@ -168,7 +168,7 @@ std::shared_ptr<Texture> CreateTexture(const std::shared_ptr<Renderer>& renderer
     }
 }
 
-std::vector<std::shared_ptr<Texture>> CreateTextures(const std::shared_ptr<Renderer>& renderer, size_t count)
+inline std::vector<std::shared_ptr<Texture>> CreateTextures(const std::shared_ptr<Renderer>& renderer, size_t count)
 {
     switch(renderer->GetAPI())
     {
@@ -185,6 +185,36 @@ std::vector<std::shared_ptr<Texture>> CreateTextures(const std::shared_ptr<Rende
         throw std::runtime_error("Metal::Pipeline::CreateTexture() is not implemented yet.");
     default:return {};
     }
+}
+
+inline std::shared_ptr<Pipeline3D> CreatePipeline3D(
+    const std::shared_ptr<Renderer>& renderer,
+    Vector2<uint32_t> viewportPos,
+    Vector2<uint32_t> viewportSize,
+    Vector2<uint32_t> scissorsPos,
+    Vector2<uint32_t> scissorsSize,
+    PrimitiveTopology primitiveTopology)
+{
+    return std::make_shared<Pipeline3D>(renderer, CreatePipeline(
+            renderer,
+            viewportPos, viewportSize,
+            scissorsPos, scissorsSize,
+            primitiveTopology));
+}
+
+inline std::shared_ptr<Pipeline3DTextured> CreatePipeline3DTextured(
+        const std::shared_ptr<Renderer>& renderer,
+        Vector2<uint32_t> viewportPos,
+        Vector2<uint32_t> viewportSize,
+        Vector2<uint32_t> scissorsPos,
+        Vector2<uint32_t> scissorsSize,
+        PrimitiveTopology primitiveTopology)
+{
+    return std::make_shared<Pipeline3DTextured>(renderer, CreatePipeline(
+            renderer,
+            viewportPos, viewportSize,
+            scissorsPos, scissorsSize,
+            primitiveTopology));
 }
 
 }

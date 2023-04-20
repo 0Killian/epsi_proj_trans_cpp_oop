@@ -33,50 +33,24 @@ void Application::RunMainLoop()
         // Initialize the renderer
         m_renderer = _m_window->CreateRenderer(Engine::RendererAPI::RendererAPI_OpenGL);
 
-        auto vertexShader = Engine::CreateShader(m_renderer, Engine::ShaderType::ShaderType_Vertex);
-        vertexShader->LoadFromFile("assets/shaders/vertexShader.vert.spv");
-
-        auto fragmentShader = Engine::CreateShader(m_renderer, Engine::ShaderType::ShaderType_Fragment);
-        fragmentShader->LoadFromFile("assets/shaders/fragmentShader.frag.spv");
-
-#pragma pack(push, 1)
-        struct Vertex
-        {
-            float x = 0;
-            float y = 0;
-            float z = 0;
-
-            float u = 0;
-            float v = 0;
-
-            Vertex() = default;
-            Vertex(float x, float y, float z, float u, float v) : x(x), y(y), z(z), u(u), v(v) {}
-
-            [[nodiscard]] static Engine::VertexBufferLayout GetLayout()
-            {
-                return {
-                    { "aPos", Engine::ShaderBaseType::ShaderBaseType_Float3 },
-                    { "aTexCoord", Engine::ShaderBaseType::ShaderBaseType_Float2 }
-                };
-            }
-        };
-#pragma pack(pop)
-
         // vertices of a cube
         // 8 vertices
-        std::vector<Vertex> vertices = {
-            { -0.5f, -0.5f, -0.5f, 0.0f, 0.0f },
-            {  0.5f, -0.5f, -0.5f, 1.0f, 0.0f },
-            { -0.5f,  0.5f, -0.5f, 0.0f, 1.0f },
-            {  0.5f,  0.5f, -0.5f, 1.0f, 1.0f },
-
-            { -0.5f, -0.5f,  0.5f, 0.0f, 0.0f },
-            {  0.5f, -0.5f,  0.5f, 1.0f, 0.0f },
-            { -0.5f,  0.5f,  0.5f, 0.0f, 1.0f },
-            {  0.5f,  0.5f,  0.5f, 1.0f, 1.0f }
+        std::vector<Engine::Pipeline3DTextured::Vertex> vertices = {
+            { { -0.5f, -0.5f, -0.5f }, { 0.0f, 0.0f } },
+            { {  0.5f, -0.5f, -0.5f }, { 1.0f, 0.0f } },
+            { { -0.5f,  0.5f, -0.5f }, { 0.0f, 1.0f } },
+            { {  0.5f,  0.5f, -0.5f }, { 1.0f, 1.0f } },
+            { { -0.5f, -0.5f,  0.5f }, { 0.0f, 0.0f } },
+            { {  0.5f, -0.5f,  0.5f }, { 1.0f, 0.0f } },
+            { { -0.5f,  0.5f,  0.5f }, { 0.0f, 1.0f } },
+            { {  0.5f,  0.5f,  0.5f }, { 1.0f, 1.0f } },
         };
 
-        auto vertexBuffer = Engine::CreateVertexBuffer<Vertex>(m_renderer, Engine::VertexBufferUsage::VertexBufferUsage_Static);
+        auto vertexBuffer = Engine::CreateVertexBuffer<Engine::Pipeline3DTextured::Vertex>(
+            m_renderer,
+            Engine::VertexBufferUsage::VertexBufferUsage_Static
+        );
+
         vertexBuffer->SetData(vertices.data(), vertices.size());
 
         std::vector<uint32_t> indices = {
@@ -91,22 +65,19 @@ void Application::RunMainLoop()
         auto indexBuffer = Engine::CreateIndexBuffer(m_renderer, Engine::IndexBufferUsage::IndexBufferUsage_Static);
         indexBuffer->SetData(indices.data(), indices.size());
 
-        auto pipeline = CreatePipeline(
-                m_renderer,
-                { 0, 0 }, { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT },
-                { 0, 0 }, { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT },
-                Engine::PrimitiveTopology::Triangles);
-        pipeline->SetVertexShader(vertexShader);
-        pipeline->SetFragmentShader(fragmentShader);
+        auto pipeline = CreatePipeline3DTextured(
+            m_renderer,
+            { 0, 0 }, { DEFAULT_WINDOW_WIDTH / 2, DEFAULT_WINDOW_HEIGHT },
+            { 0, 0 }, { DEFAULT_WINDOW_WIDTH / 2, DEFAULT_WINDOW_HEIGHT },
+            Engine::PrimitiveTopology::Triangles);
         pipeline->SetVertexBuffer(vertexBuffer);
         pipeline->SetIndexBuffer(indexBuffer);
 
-        pipeline->Bind();
-
         std::shared_ptr<Engine::Texture> texture = Engine::CreateTexture(m_renderer);
         texture->LoadFromFile("assets/textures/main_menu.png");
+        pipeline->SetTexture(texture);
 
-        Engine::Vector3<float> objectPosition = {0, 0.0f, 2.0f };
+        Engine::Vector3<float> objectPosition = {0, 0.0f, 2.0f};
 
         Engine::Vector3<float> cameraPosition = { 0.0f, 0.0f, -5.0f };
         Engine::Vector3<float> cameraTarget = objectPosition;
@@ -115,17 +86,43 @@ void Application::RunMainLoop()
         Engine::Matrix4<float> view = Engine::Matrix4<float>::LookAt(cameraPosition, cameraTarget, { 0.0f, 1.0f, 0.0f });
         Engine::Matrix4<float> projection = Engine::Matrix4<float>::PerspectiveProjection(
                 45.0f,
-                static_cast<float>(DEFAULT_WINDOW_WIDTH) / static_cast<float>(DEFAULT_WINDOW_HEIGHT),
+                static_cast<float>(DEFAULT_WINDOW_WIDTH / 2.0f) / static_cast<float>(DEFAULT_WINDOW_HEIGHT),
                 0.1f,
                 1000.0f);
 
-        Engine::Matrix4<float> mvp = projection * view * model;
+        pipeline->SetModelMatrix(model);
+        pipeline->SetViewMatrix(view);
+        pipeline->SetProjectionMatrix(projection);
 
-        std::shared_ptr<Engine::Texture> texture2 = Engine::CreateTexture(m_renderer);
-        texture2->LoadFromFile("assets/textures/player.png");
+        std::vector<Engine::Pipeline3D::Vertex> vertices2 = {
+            { { -0.5f, -0.5f, -0.5f }, Engine::Color::Red() },
+            { {  0.5f, -0.5f, -0.5f }, Engine::Color::Green() },
+            { { -0.5f,  0.5f, -0.5f }, Engine::Color::Blue() },
+            { {  0.5f,  0.5f, -0.5f }, Engine::Color::Yellow() },
+            { { -0.5f, -0.5f,  0.5f }, Engine::Color::Red() },
+            { {  0.5f, -0.5f,  0.5f }, Engine::Color::Green() },
+            { { -0.5f,  0.5f,  0.5f }, Engine::Color::Blue() },
+            { {  0.5f,  0.5f,  0.5f }, Engine::Color::Yellow() },
+        };
 
-        pipeline->SetUniform("uTexture", texture);
-        pipeline->SetUniform("uniforms.MVP", mvp);
+        auto vertexBuffer2 = Engine::CreateVertexBuffer<Engine::Pipeline3D::Vertex>(
+            m_renderer,
+            Engine::VertexBufferUsage::VertexBufferUsage_Static
+        );
+        vertexBuffer2->SetData(vertices2.data(), vertices2.size());
+
+        auto pipeline2 = CreatePipeline3D(
+            m_renderer,
+            { DEFAULT_WINDOW_WIDTH / 2, 0 }, { DEFAULT_WINDOW_WIDTH / 2, DEFAULT_WINDOW_HEIGHT },
+            { DEFAULT_WINDOW_WIDTH / 2, 0 }, { DEFAULT_WINDOW_WIDTH / 2, DEFAULT_WINDOW_HEIGHT },
+            Engine::PrimitiveTopology::Triangles);
+
+        pipeline2->SetVertexBuffer(vertexBuffer2);
+        pipeline2->SetIndexBuffer(indexBuffer);
+
+        pipeline2->SetModelMatrix(model);
+        pipeline2->SetViewMatrix(view);
+        pipeline2->SetProjectionMatrix(projection);
 
         float time = 0;
 
@@ -154,7 +151,6 @@ void Application::RunMainLoop()
                 frames = 0;
             }
 
-            pipeline->SetUniform("uTexture", texture);
             m_renderer->Clear(Engine::Color::Green());
 
             time += delta_time;
@@ -167,36 +163,14 @@ void Application::RunMainLoop()
             float zrot = std::cos(time * 0.75f) * 180.0f;
 
             view = Engine::Matrix4<float>::LookAt({xpos, ypos, zpos}, objectPosition, { 0.0f, 1.0f, 0.0f });
-
             model = Engine::Matrix4<float>::Translation(objectPosition) * Engine::Matrix4<float>::Rotation({xrot, yrot, 45.0f + zrot});
-            mvp = projection * view * model;
-            pipeline->SetUniform("uTexture", texture);
-            pipeline->SetUniform("uniforms.MVP", mvp);
+            pipeline->SetModelMatrix(model);
+            pipeline->SetViewMatrix(view);
             pipeline->Render();
 
-            model = Engine::Matrix4<float>::Translation({-1.5f, -1.5f, 0.0f}) * Engine::Matrix4<float>::Rotation({45 + xrot, zrot, yrot}) * Engine::Matrix4<float>::Scale({0.75f, 0.75f, 0.75f});
-            mvp = projection * view * model;
-            pipeline->SetUniform("uTexture", texture);
-            pipeline->SetUniform("uniforms.MVP", mvp);
-            pipeline->Render();
-
-            model = Engine::Matrix4<float>::Translation({1.5f, -1.5f, 0.0f}) * Engine::Matrix4<float>::Rotation({zrot, 45 + xrot, yrot}) * Engine::Matrix4<float>::Scale({0.75f, 0.75f, 0.75f});
-            mvp = projection * view * model;
-            pipeline->SetUniform("uTexture", texture);
-            pipeline->SetUniform("uniforms.MVP", mvp);
-            pipeline->Render();
-
-            model = Engine::Matrix4<float>::Translation({-1.5f, 1.5f, 0.0f}) * Engine::Matrix4<float>::Rotation({yrot, zrot, 45 + xrot}) * Engine::Matrix4<float>::Scale({0.75f, 0.75f, 0.75f});
-            mvp = projection * view * model;
-            pipeline->SetUniform("uniforms.MVP", mvp);
-            pipeline->SetUniform("uTexture", texture2);
-            pipeline->Render();
-
-            model = Engine::Matrix4<float>::Translation({1.5f, 1.5f, 0.0f}) * Engine::Matrix4<float>::Rotation({45 + yrot, xrot, zrot}) * Engine::Matrix4<float>::Scale({0.75f, 0.75f, 0.75f});
-            mvp = projection * view * model;
-            pipeline->SetUniform("uTexture", texture);
-            pipeline->SetUniform("uniforms.MVP", mvp);
-            pipeline->Render();
+            pipeline2->SetModelMatrix(model);
+            pipeline2->SetViewMatrix(view);
+            pipeline2->Render();
 
             m_renderer->SwapBuffers();
 
