@@ -4,39 +4,39 @@
 
 #pragma once
 
+#include <utility>
+
 #include "VertexBufferLayout.h"
 #include "Renderer.h"
 #include "engine/renderers/Mapping.h"
+#include "VertexBufferBase.h"
 
 namespace Engine
 {
-
-enum class VertexBufferUsage : uint8_t
-{
-    VertexBufferUsage_Static,
-    VertexBufferUsage_Dynamic,
-    VertexBufferUsage_Stream
-};
 
 template<IsVertexBufferElement T>
 class VertexBuffer
 {
 public:
-    virtual ~VertexBuffer() = default;
+    explicit VertexBuffer(std::shared_ptr<VertexBufferBase> base) : m_base(std::move(base)) {}
 
-    virtual void Bind() = 0;
-    virtual void Unbind() = 0;
+    inline void Bind() { m_base->Bind(); }
+    inline void Unbind() { m_base->Unbind(); }
 
-    virtual void SetData(const T* data, size_t count) = 0;
-    virtual void UpdateData(const T* data, size_t count, size_t offset) = 0;
+    inline void SetData(const T* data, size_t count) { m_base->SetData(data, count * sizeof(T)); }
+    inline void UpdateData(const T* data, size_t count, size_t offset)
+    { m_base->UpdateData(data, count * sizeof(T), offset * sizeof(T)); }
 
-    [[nodiscard]] virtual Mapping<VertexBuffer, T> Map(size_t offset, size_t count) = 0;
+    [[nodiscard]] virtual Mapping<VertexBuffer, T> Map(size_t offset, size_t count)
+    { return Mapping<VertexBuffer, T>(this, reinterpret_cast<T*>(m_base->Map(offset * sizeof(T), count * sizeof(T)))); }
 
 protected:
     friend Mapping<VertexBuffer, T>;
 
-    virtual void UpdateMappingPointer(Mapping<VertexBuffer, T>* mapping) = 0;
-    virtual void Unmap() = 0;
+    void Unmap() { m_base->Unmap(); }
+
+private:
+    std::shared_ptr<VertexBufferBase> m_base;
 };
 
 }

@@ -87,7 +87,7 @@ add_executable(HarvestHaven
         src/engine/Windows/opengl/OpenGLRenderer.cpp
         src/engine/glad.cpp
         src/engine/glad_wgl.cpp
-        src/engine/renderers/opengl/VertexBuffer.cpp
+        src/engine/renderers/opengl/VertexBufferBase.cpp
         src/engine/renderers/opengl/IndexBuffer.cpp
         src/engine/renderers/opengl/Shader.cpp
         src/engine/renderers/opengl/Pipeline.cpp

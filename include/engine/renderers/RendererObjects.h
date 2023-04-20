@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "engine/renderers/opengl/VertexBuffer.h"
+#include "engine/renderers/opengl/VertexBufferBase.h"
 #include "engine/renderers/opengl/IndexBuffer.h"
 #include "engine/renderers/opengl/Shader.h"
 #include "engine/renderers/opengl/Pipeline.h"
@@ -21,7 +21,8 @@ std::shared_ptr<VertexBuffer<T>> CreateVertexBuffer(const std::shared_ptr<Render
 {
     switch (renderer->GetAPI())
     {
-    case RendererAPI::RendererAPI_OpenGL:return std::make_shared<OpenGL::VertexBuffer<T>>(usage);
+    case RendererAPI::RendererAPI_OpenGL:
+        return std::make_shared<VertexBuffer<T>>(std::make_shared<OpenGL::VertexBufferBase>(usage));
     case RendererAPI::RendererAPI_Vulkan:
         //return std::make_shared<Vulkan::VertexBuffer<T>>(usage);
         throw std::runtime_error("Vulkan::VertexBuffer<T>::CreateVertexBuffer() is not implemented yet.");
@@ -41,7 +42,16 @@ CreateVertexBuffers(const std::shared_ptr<Renderer>& renderer, VertexBufferUsage
 {
     switch (renderer->GetAPI())
     {
-    case RendererAPI::RendererAPI_OpenGL:return OpenGL::VertexBuffer<T>::CreateVertexBuffers(usage, count);
+    case RendererAPI::RendererAPI_OpenGL:
+    {
+        auto bufferBases = OpenGL::VertexBufferBase::CreateVertexBuffers(usage, count);
+        std::vector<std::shared_ptr<VertexBuffer<T>>> buffers;
+        buffers.reserve(bufferBases.size());
+        for (auto &bufferBase: bufferBases)
+        {
+            buffers.emplace_back(std::make_shared<VertexBuffer<T>>(bufferBase));
+        }
+    }
     case RendererAPI::RendererAPI_Vulkan:
         //return std::make_shared<Vulkan::VertexBuffer<T>>(usage);
         throw std::runtime_error("Vulkan::VertexBuffer<T>::CreateVertexBuffers() is not implemented yet.");

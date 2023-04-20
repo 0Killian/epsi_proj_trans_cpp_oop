@@ -16,11 +16,11 @@ public:
     explicit IndexBuffer(IndexBufferUsage usage);
     IndexBuffer(IndexBufferUsage usage, const uint32_t* indices, size_t count);
 
-    IndexBuffer& operator=(const IndexBuffer& other);
-    IndexBuffer& operator=(IndexBuffer&& other) noexcept;
+    IndexBuffer& operator=(const IndexBuffer& other) = delete;
+    IndexBuffer& operator=(IndexBuffer&& other) = delete;
 
-    IndexBuffer(const IndexBuffer& other) { operator=(other); }
-    IndexBuffer(IndexBuffer&& other) noexcept { *this = std::move(other); }
+    IndexBuffer(const IndexBuffer& other) = delete;
+    IndexBuffer(IndexBuffer&& other) = delete;
 
     static std::vector<std::shared_ptr<Engine::IndexBuffer>> CreateIndexBuffers(IndexBufferUsage usage, size_t count);
 
@@ -35,18 +35,15 @@ public:
 
 protected:
     void Unmap() override;
-    inline void UpdateMappingPointer(Mapping<Engine::IndexBuffer, uint32_t>* mapping) override
-    {
-        m_mapping = mapping;
-    }
 
 private:
+    friend Mapping<IndexBuffer, uint32_t>;
     IndexBuffer(IndexBufferUsage usage, uint32_t id);
 
     uint32_t m_id = 0;
     size_t m_count = 0;
     IndexBufferUsage m_usage = IndexBufferUsage::IndexBufferUsage_Static;
-    Mapping<Engine::IndexBuffer, uint32_t>* m_mapping = nullptr;
+    bool m_mapped = false;
 };
 
 }

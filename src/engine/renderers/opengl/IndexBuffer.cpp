@@ -23,42 +23,6 @@ IndexBuffer::IndexBuffer(IndexBufferUsage usage, const uint32_t* indices, size_t
     SetData(indices, count);
 }
 
-IndexBuffer& IndexBuffer::operator=(const IndexBuffer& other)
-{
-    if(this == &other)
-        return *this;
-
-    if(m_id == 0)
-        glGenBuffers(1, &m_id);
-
-    glBindBuffer(GL_COPY_READ_BUFFER, m_id);
-    glBindBuffer(GL_COPY_WRITE_BUFFER, other.m_id);
-
-    GLint size;
-    glGetBufferParameteriv(GL_COPY_READ_BUFFER, GL_BUFFER_SIZE, &size);
-
-    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, size);
-
-    m_count = other.m_count;
-    m_usage = other.m_usage;
-
-    return *this;
-}
-
-IndexBuffer& IndexBuffer::operator=(IndexBuffer&& other) noexcept
-{
-    if(this == &other)
-        return *this;
-
-    m_id = other.m_id;
-    m_count = other.m_count;
-    m_usage = other.m_usage;
-
-    other.m_id = 0;
-
-    return *this;
-}
-
 std::vector<std::shared_ptr<Engine::IndexBuffer>> IndexBuffer::CreateIndexBuffers(IndexBufferUsage usage, size_t count)
 {
     std::vector<uint32_t> ids(count);
@@ -108,7 +72,7 @@ void IndexBuffer::UpdateData(const uint32_t* data, size_t count, size_t offset)
     if(offset + count > m_count)
         throw std::runtime_error("Trying to update data outside of the OpenGL index buffer.");
 
-    if(m_mapping != nullptr)
+    if(m_mapped)
         throw std::runtime_error("Trying to update an OpenGL index buffer that is still mapped.");
 
     if(data == nullptr)
@@ -134,7 +98,7 @@ void IndexBuffer::UpdateData(const uint32_t* data, size_t count, size_t offset)
     if(offset + count > m_count)
         throw std::runtime_error("Trying to map data outside of the OpenGL index buffer.");
 
-    if(m_mapping != nullptr)
+    if(m_mapped)
         throw std::runtime_error("Trying to map an OpenGL index buffer that is already mapped.");
 #endif
 
@@ -145,7 +109,7 @@ void IndexBuffer::UpdateData(const uint32_t* data, size_t count, size_t offset)
         GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT
     ));
 
-    return { *this, data };
+    return Mapping<OpenGL::IndexBuffer, uint32_t>(this, data);
 }
 
 IndexBuffer::~IndexBuffer()
@@ -154,7 +118,7 @@ IndexBuffer::~IndexBuffer()
     if(m_id == 0)
         spdlog::error("Trying to delete an already deleted OpenGL VertexBuffer");
 
-    if(m_mapping != nullptr)
+    if(m_mapped)
         spdlog::error("Trying to delete an OpenGL VertexBuffer that is still mapped");
 #endif
     glDeleteBuffers(1, &m_id);
@@ -164,7 +128,6 @@ void IndexBuffer::Unmap()
 {
     Bind();
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-    m_mapping = nullptr;
 }
 
 IndexBuffer::IndexBuffer(IndexBufferUsage usage, uint32_t id)

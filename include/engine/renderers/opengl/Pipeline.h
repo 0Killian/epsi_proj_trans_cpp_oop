@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include "engine/renderers/opengl/VertexBuffer.h"
+#include "engine/renderers/opengl/VertexBufferBase.h"
 #include "engine/renderers/opengl/Shader.h"
 #include "engine/renderers/Pipeline.h"
 #include "engine/glad/glad.h"
@@ -215,6 +215,7 @@ public:
                             }
 
                             glEnableVertexAttribArray(results.location);
+                            // TODO: https://www.khronos.org/opengl/wiki/Vertex_Specification#Separate_attribute_format
                             glVertexAttribPointer(
                                     results.location,
                                     static_cast<GLint>(element.componentCount),

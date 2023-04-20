@@ -6,14 +6,28 @@
 namespace Engine
 {
 
-// TODO: Find a better way to do that
 template<typename Controller, typename T>
+requires (!std::move_constructible<Controller>)
 class Mapping
 {
+protected:
+    friend Controller;
+
+    template <typename U, typename V>
+    requires (!std::move_constructible<U>)
+    friend class Mapping;
+
+    Mapping(Controller* controller, T* data) : m_controller(controller), m_data(data) {}
+
 public:
-    Mapping(Controller& controller, T* data) : m_controller(controller), m_data(data)
+    template <typename U>
+    requires std::is_base_of_v<Controller, U>
+    Mapping(Mapping<U, T>&& other) // NOLINT
     {
-        m_controller.UpdateMappingPointer(this);
+        m_controller = static_cast<U*>(other.m_controller);
+        m_data = other.m_data;
+        other.m_data = nullptr;
+        other.m_controller = nullptr;
     }
 
     Mapping(const Mapping& other) = delete;
@@ -22,6 +36,7 @@ public:
             : m_controller(other.m_controller), m_data(other.m_data)
     {
         other.m_data = nullptr;
+        other.m_controller = nullptr;
     }
 
     Mapping& operator=(const Mapping& other) = delete;
@@ -31,14 +46,13 @@ public:
         m_controller = other.m_buffer;
         m_data = other.m_data;
         other.m_data = nullptr;
-
-        m_controller.UpdateMappingPointer(this);
+        other.m_controller = nullptr;
     }
 
     ~Mapping()
     {
-        if (m_data != nullptr)
-            m_controller.Unmap();
+        if (m_controller != nullptr)
+            m_controller->Unmap();
     }
 
     T& operator[](size_t index)
@@ -56,13 +70,13 @@ public:
         return *m_data;
     }
 
-    T* operator&()
+    T* operator&() // NOLINT
     {
         return m_data;
     }
 
-private:
-    Controller& m_controller;
+protected:
+    Controller* m_controller;
     T* m_data;
 };
 

@@ -18,7 +18,16 @@ enum class IndexBufferUsage : uint8_t
 class IndexBuffer
 {
 public:
+    using MappingType = uint32_t;
+
+    IndexBuffer() = default;
     virtual ~IndexBuffer() = default;
+
+    IndexBuffer(const IndexBuffer& other) = delete;
+    IndexBuffer(IndexBuffer&& other) = delete;
+
+    IndexBuffer& operator=(const IndexBuffer& other) = delete;
+    IndexBuffer& operator=(IndexBuffer&& other) = delete;
 
     virtual void Bind() = 0;
     virtual void Unbind() = 0;
@@ -32,7 +41,6 @@ public:
 protected:
     friend Mapping<IndexBuffer, uint32_t>;
 
-    virtual void UpdateMappingPointer(Mapping<IndexBuffer, uint32_t>* mapping) = 0;
     virtual void Unmap() = 0;
 };
 
