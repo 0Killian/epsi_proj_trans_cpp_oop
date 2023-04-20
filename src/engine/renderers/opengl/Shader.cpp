@@ -80,8 +80,6 @@ void Shader::LoadFromFile(const std::string &path)
     // Transpile to GLSL, ready to give to GL driver
     std::string source = compiler.compile();
 
-    spdlog::info("{}", source);
-
     // Compile GLSL shader
     const char* sourcePtr = source.c_str();
     glShaderSource(m_id, 1, &sourcePtr, nullptr);
@@ -106,11 +104,6 @@ void Shader::ConvertSampledImages(spirv_cross::CompilerGLSL& compiler, spirv_cro
 {
     for(auto& resource : resources) // GLSL: sampler2d
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("sampler2d: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -120,15 +113,6 @@ void Shader::ConvertSeparateImages(spirv_cross::CompilerGLSL& compiler, spirv_cr
 {
     for(auto& resource : resources) // GLSL: texture2d/samplerBuffer
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-
-        if(compiler.get_type(resource.type_id).image.dim == spv::DimBuffer)
-            spdlog::info("imageBuffer: set = {}, binding = {}, name = {}", set, binding, name);
-        else
-            spdlog::info("texture2d: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -138,14 +122,6 @@ void Shader::ConvertStorageImages(spirv_cross::CompilerGLSL& compiler, spirv_cro
 {
     for(auto& resource : resources) // GLSL: image2d/imageBuffer
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-        if(compiler.get_type(resource.type_id).image.dim == spv::DimBuffer)
-            spdlog::info("imageBuffer: set = {}, binding = {}, name = {}", set, binding, name);
-        else
-            spdlog::info("image2d: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -155,11 +131,6 @@ void Shader::ConvertSeparateSamplers(spirv_cross::CompilerGLSL& compiler, spirv_
 {
     for(auto& resource : resources) // GLSL: sampler/samplerShadow
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("sampler: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -169,11 +140,6 @@ void Shader::ConvertUniformBuffers(spirv_cross::CompilerGLSL& compiler, spirv_cr
 {
     for(auto& resource : resources) // GLSL: uniform UBO {}
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("uniform: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -183,11 +149,6 @@ void Shader::ConvertPushConstantBuffers(spirv_cross::CompilerGLSL& compiler, spi
 {
     for(auto& resource : resources) // GLSL: layout(push_constant) uniform Push
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("push_constant: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -197,11 +158,6 @@ void Shader::ConvertSubpassInputs(spirv_cross::CompilerGLSL& compiler, spirv_cro
 {
     for(auto& resource : resources) // GLSL: subpassInput
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("subpassInput: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -211,10 +167,6 @@ void Shader::ConvertStageInputs(spirv_cross::CompilerGLSL& compiler, spirv_cross
 {
     for(auto& resource : resources) // GLSL: in vec2 uv
     {
-        uint32_t location = compiler.get_decoration(resource.id, spv::DecorationLocation);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("stage_input: location = {}, name = {}", location, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationLocation);
     }
 }
@@ -223,10 +175,6 @@ void Shader::ConvertStageOutputs(spirv_cross::CompilerGLSL& compiler, spirv_cros
 {
     for(auto& resource : resources) // GLSL: out vec4 color
     {
-        uint32_t location = compiler.get_decoration(resource.id, spv::DecorationLocation);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("stage_output: location = {}, name = {}", location, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationLocation);
     }
 }
@@ -235,11 +183,6 @@ void Shader::ConvertStorageBuffers(spirv_cross::CompilerGLSL& compiler, spirv_cr
 {
     for(auto& resource : resources) // GLSL: buffer SSBO {}
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("storage_buffer: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -249,11 +192,6 @@ void Shader::ConvertAccelerationStructures(spirv_cross::CompilerGLSL& compiler, 
 {
     for(auto& resource : resources) // Ray tracing, GLSL: ?
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("Acceleration structure: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -263,11 +201,6 @@ void Shader::ConvertShaderRecordBuffers(spirv_cross::CompilerGLSL& compiler, spi
 {
     for(auto& resource : resources)
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("Shader record buffer: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -277,11 +210,6 @@ void Shader::ConvertAtomicCounters(spirv_cross::CompilerGLSL& compiler, spirv_cr
 {
     for(auto& resource : resources) // GLSL: ?
     {
-        uint32_t set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.id);
-        spdlog::info("Atomic counter: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.id, spv::DecorationBinding);
     }
@@ -291,11 +219,6 @@ void Shader::ConvertBuiltinInputs(spirv_cross::CompilerGLSL& compiler, spirv_cro
 {
     for(auto& resource : resources) // GLSL: ?
     {
-        uint32_t set = compiler.get_decoration(resource.resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.resource.id);
-        spdlog::info("Builtin input: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.resource.id, spv::DecorationBinding);
     }
@@ -305,11 +228,6 @@ void Shader::ConvertBuiltinOutputs(spirv_cross::CompilerGLSL& compiler, spirv_cr
 {
     for(auto& resource : resources) // GLSL: ?
     {
-        uint32_t set = compiler.get_decoration(resource.resource.id, spv::DecorationDescriptorSet);
-        uint32_t binding = compiler.get_decoration(resource.resource.id, spv::DecorationBinding);
-        const std::string& name = compiler.get_name(resource.resource.id);
-        spdlog::info("Builtin output: set = {}, binding = {}, name = {}", set, binding, name);
-
         compiler.unset_decoration(resource.resource.id, spv::DecorationDescriptorSet);
         compiler.unset_decoration(resource.resource.id, spv::DecorationBinding);
     }

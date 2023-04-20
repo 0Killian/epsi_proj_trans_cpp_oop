@@ -4,11 +4,78 @@
 #include "engine/glad/glad.h"
 #include "engine/glad/glad_wgl.h"
 #include "engine/renderers/opengl/OpenGLRenderer.h"
+#include <stb_image.h>
 
 #ifdef PLATFORM_LINUX
 
 namespace Engine::OpenGL
 {
+
+void DebugCallback(
+        GLenum source,
+        GLenum type,
+        GLuint id,
+        GLenum severity,
+        GLsizei length,
+        const GLchar* message,
+        const void* userParam)
+{
+    std::stringstream ss;
+    ss << "[OpenGL Debug - ";
+
+    switch (type)
+    {
+    case GL_DEBUG_TYPE_ERROR:
+        ss << "Error";
+        break;
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        ss << "Deprecated";
+        break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+        ss << "Undefined Behavior";
+        break;
+    case GL_DEBUG_TYPE_PORTABILITY:
+        ss << "Portability";
+        break;
+    case GL_DEBUG_TYPE_PERFORMANCE:
+        ss << "Performance";
+        break;
+    case GL_DEBUG_TYPE_MARKER:
+        ss << "Marker";
+        break;
+    case GL_DEBUG_TYPE_PUSH_GROUP:
+        ss << "Push Group";
+        break;
+    case GL_DEBUG_TYPE_POP_GROUP:
+        ss << "Pop Group";
+        break;
+    case GL_DEBUG_TYPE_OTHER:
+        ss << "Other";
+        break;
+    default:
+        ss << "Unknown";
+        break;
+    }
+
+    ss << "] " << message;
+
+    switch (severity)
+    {
+    case GL_DEBUG_SEVERITY_HIGH:
+        spdlog::critical(ss.str());
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        spdlog::error(ss.str());
+        break;
+    case GL_DEBUG_SEVERITY_LOW:
+        spdlog::warn(ss.str());
+        break;
+    case GL_DEBUG_SEVERITY_NOTIFICATION:
+    default:
+        spdlog::info(ss.str());
+        break;
+    }
+}
 
 bool contextErrorOccured = false;
 int ErrorHandler(Display* display, XErrorEvent* event)
@@ -146,6 +213,17 @@ Renderer::Renderer(Window &window)
     {
         throw std::runtime_error("Failed to load OpenGL");
     }
+
+    // Initialize STB Image
+    stbi_set_flip_vertically_on_load(true);
+
+    // Set OpenGL Starting State
+    glDebugMessageCallback(DebugCallback, this);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 }
 
 Renderer::~Renderer()

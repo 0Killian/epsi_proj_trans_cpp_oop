@@ -36,7 +36,7 @@ foreach(GLSL ${GLSL_SOURCE_FILES})
     add_custom_command(
             OUTPUT ${SPIRV}
             COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_SOURCE_DIR}/working_directory/assets/shaders/"
-            COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
+            COMMAND ${GLSL_VALIDATOR} -V -g ${GLSL} -o ${SPIRV}
             DEPENDS ${GLSL})
     list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 endforeach(GLSL)
@@ -56,6 +56,9 @@ FetchContent_MakeAvailable(SFML)
 FetchContent_Declare(SPIRV_CROSS
         GIT_REPOSITORY https://github.com/Unity-Technologies/SPIRV-Cross.git)
 FetchContent_MakeAvailable(SPIRV_CROSS)
+
+find_package(Stb REQUIRED)
+
 
 add_executable(HarvestHaven
         src/main.cpp
@@ -88,10 +91,13 @@ add_executable(HarvestHaven
         src/engine/renderers/opengl/IndexBuffer.cpp
         src/engine/renderers/opengl/Shader.cpp
         src/engine/renderers/opengl/Pipeline.cpp
-        src/engine/Linux/Window.cpp src/engine/Linux/opengl/OpenGLRenderer.cpp src/engine/glad_glx.cpp)
-
+        src/engine/Linux/Window.cpp
+        src/engine/Linux/opengl/OpenGLRenderer.cpp
+        src/engine/glad_glx.cpp
+        src/engine/renderers/opengl/Texture.cpp src/engine/stbi_impl.cpp)
 
 target_include_directories(HarvestHaven PRIVATE include)
+target_include_directories(HarvestHaven PRIVATE ${Stb_INCLUDE_DIR})
 target_precompile_headers(HarvestHaven PRIVATE include/Precompiled.h)
 target_link_libraries(HarvestHaven PRIVATE sfml-graphics)
 target_link_libraries(HarvestHaven PRIVATE spirv-cross-cpp)

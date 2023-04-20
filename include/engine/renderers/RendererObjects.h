@@ -8,6 +8,7 @@
 #include "engine/renderers/opengl/IndexBuffer.h"
 #include "engine/renderers/opengl/Shader.h"
 #include "engine/renderers/opengl/Pipeline.h"
+#include "engine/renderers/opengl/Texture.h"
 
 //#include "renderers/vulkan/VertexBuffer.h"
 //#include "renderers/directx/VertexBuffer.h"
@@ -134,6 +135,44 @@ CreatePipeline(
         //return std::make_shared<Metal::Pipeline>();
         throw std::runtime_error("Metal::Pipeline::CreatePipeline() is not implemented yet.");
     default:return nullptr;
+    }
+}
+
+std::shared_ptr<Texture> CreateTexture(const std::shared_ptr<Renderer>& renderer)
+{
+    switch(renderer->GetAPI())
+    {
+    case RendererAPI::RendererAPI_OpenGL:
+        return std::make_shared<OpenGL::Texture>();
+    case RendererAPI::RendererAPI_Vulkan:
+        //return std::make_shared<Vulkan::Texture>();
+        throw std::runtime_error("Vulkan::Pipeline::CreateTexture() is not implemented yet.");
+    case RendererAPI::RendererAPI_DirectX:
+        //return std::make_shared<DirectX::Texture>();
+        throw std::runtime_error("DirectX::Pipeline::CreateTexture() is not implemented yet.");
+    case RendererAPI::RendererAPI_Metal:
+        //return std::make_shared<Metal::Texture>();
+        throw std::runtime_error("Metal::Pipeline::CreateTexture() is not implemented yet.");
+    default:return nullptr;
+    }
+}
+
+std::vector<std::shared_ptr<Texture>> CreateTextures(const std::shared_ptr<Renderer>& renderer, size_t count)
+{
+    switch(renderer->GetAPI())
+    {
+    case RendererAPI::RendererAPI_OpenGL:
+        return OpenGL::Texture::CreateTextures(count);
+    case RendererAPI::RendererAPI_Vulkan:
+        //return std::make_shared<Vulkan::Texture>();
+        throw std::runtime_error("Vulkan::Pipeline::CreateTexture() is not implemented yet.");
+    case RendererAPI::RendererAPI_DirectX:
+        //return std::make_shared<DirectX::Texture>();
+        throw std::runtime_error("DirectX::Pipeline::CreateTexture() is not implemented yet.");
+    case RendererAPI::RendererAPI_Metal:
+        //return std::make_shared<Metal::Texture>();
+        throw std::runtime_error("Metal::Pipeline::CreateTexture() is not implemented yet.");
+    default:return {};
     }
 }
 

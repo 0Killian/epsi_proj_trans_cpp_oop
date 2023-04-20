@@ -19,8 +19,10 @@
 #define PLATFORM_WINDOWS
 #define WIN32_LEAN_AND_MIN
 #include <windows.h>
+#undef near
+#undef far
 
-#elif defined(__linux__)
+#elif defined(__unix__)
 #define PLATFORM_LINUX
 #include <xcb/xcb.h>
 #include <X11/keysym.h>

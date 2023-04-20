@@ -7,6 +7,7 @@
 #include "engine/renderers/opengl/Shader.h"
 #include "engine/renderers/Pipeline.h"
 #include "engine/glad/glad.h"
+#include "Texture.h"
 
 namespace Engine::OpenGL
 {
@@ -98,10 +99,6 @@ public:
                 {
                     throw std::runtime_error(std::string(infoLog.begin(), infoLog.end()));
                 }
-                else
-                {
-                    spdlog::info("Pipeline validation log: {}", std::string(infoLog.begin(), infoLog.end()));
-                }
 #endif
 
                 m_shouldLink = false;
@@ -120,15 +117,10 @@ public:
                 this->m_vertexBuffer->Bind();
                 this->m_indexBuffer->Bind();
 
-                spdlog::info("Updating pipeline bindings.");
                 glGetProgramInterfaceiv(m_programId, GL_UNIFORM, GL_ACTIVE_RESOURCES, &m_uniformCount);
-                //glGetProgramInterfaceiv(m_programId, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &m_uniformBlockCount);
-                //glGetProgramInterfaceiv(m_programId, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &m_shaderStorageBlockCount);
                 glGetProgramInterfaceiv(m_programId, GL_PROGRAM_INPUT, GL_ACTIVE_RESOURCES, &m_inputCount);
 
                 glGetProgramInterfaceiv(m_programId, GL_UNIFORM, GL_MAX_NAME_LENGTH, &m_maxUniformNameSize);
-                //glGetProgramInterfaceiv(m_programId, GL_UNIFORM_BLOCK, GL_MAX_NAME_LENGTH, &m_maxUniformBlockNameSize);
-                //glGetProgramInterfaceiv(m_programId, GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &m_maxShaderStorageBlockNameSize);
                 glGetProgramInterfaceiv(m_programId, GL_PROGRAM_INPUT, GL_MAX_NAME_LENGTH, &m_maxInputNameSize);
 
                 m_uniformNameBuffer.clear();
@@ -141,186 +133,99 @@ public:
                 VertexBufferLayout layout = T::GetLayout();
                 for(auto& element : layout.GetElements())
                 {
+                    if(element.type == ShaderBaseType::ShaderBaseType_Texture)
+                        throw std::runtime_error("Texture type is not supported in vertex buffer layout.");
+
                     m_inputNames.emplace_back(element.name);
                 }
-
-                if(m_uniformNames.size() != m_uniformCount)
-                    throw std::runtime_error("Uniform count mismatch.");
-
-                //if(m_uniformBlockNames.size() != m_uniformBlockCount)
-                //    throw std::runtime_error("Uniform block count mismatch.");
-
-                //if(m_shaderStorageBlockNames.size() != m_shaderStorageBlockCount)
-                //    throw std::runtime_error("Shader storage block count mismatch.");
-
-                if(m_inputNames.size() != m_inputCount)
-                    throw std::runtime_error("Input count mismatch.");
-
 
                 for(auto& i : m_boundAttributeLocations)
                 {
                     glDisableVertexAttribArray(i);
                 }
 
+                m_boundAttributeLocations.clear();
 
-                const GLenum uniformProperties[] = {
-                        GL_NAME_LENGTH,
-                        GL_TYPE,
-                        GL_ARRAY_SIZE,
-                        GL_OFFSET,
-                        GL_BLOCK_INDEX,
-                        GL_ARRAY_STRIDE,
-                        GL_MATRIX_STRIDE,
-                        GL_IS_ROW_MAJOR,
-                        GL_ATOMIC_COUNTER_BUFFER_INDEX,
-                        GL_BUFFER_BINDING,
-                        GL_BUFFER_DATA_SIZE,
-                        GL_NUM_ACTIVE_VARIABLES,
-                        GL_REFERENCED_BY_VERTEX_SHADER,
-                        GL_REFERENCED_BY_TESS_CONTROL_SHADER,
-                        GL_REFERENCED_BY_TESS_EVALUATION_SHADER,
-                        GL_REFERENCED_BY_GEOMETRY_SHADER,
-                        GL_REFERENCED_BY_FRAGMENT_SHADER,
-                        GL_REFERENCED_BY_COMPUTE_SHADER,
-                        GL_LOCATION
-                };
-
-#pragma pack(push, 1)
-                struct UniformResults
-                {
-                    GLint nameLength;
-                    GLint type;
-                    GLint arraySize;
-                    GLint offset;
-                    GLint blockIndex;
-                    GLint arrayStride;
-                    GLint matrixStride;
-                    GLint isRowMajor;
-                    GLint atomicCounterBufferIndex;
-                    GLint bufferBinding;
-                    GLint bufferDataSize;
-                    GLint numActiveVariables;
-                    GLboolean referencedByVertexShader;
-                    GLboolean referencedByTessControlShader;
-                    GLboolean referencedByTessEvaluationShader;
-                    GLboolean referencedByGeometryShader;
-                    GLboolean referencedByFragmentShader;
-                    GLboolean referencedByComputeShader;
-                    GLint location;
-                } uniformResults;
-#pragma pack(pop)
+                m_uniforms.clear();
 
                 for(int i = 0; i < m_uniformCount; i++)
                 {
+                    static const GLenum properties[] = { GL_TYPE, GL_ARRAY_SIZE, GL_LOCATION };
+#pragma pack(push, 1)
+                    struct { GLint type; GLint arraySize; GLint location; } results;
+#pragma pack(pop)
+
                     glGetProgramResourceiv(
-                            m_programId,
-                            GL_UNIFORM,
-                            i,
-                            sizeof(uniformProperties) / sizeof(uniformProperties[0]),
-                            uniformProperties,
-                            sizeof(UniformResults) / sizeof(GLint),
-                            nullptr,
-                            (GLint*)&uniformResults
+                        m_programId,
+                        GL_UNIFORM,
+                        i,
+                        sizeof(properties) / sizeof(properties[0]),
+                        properties,
+                        sizeof(results) / sizeof(GLint),
+                        nullptr,
+                        (GLint*)&results
                     );
 
                     glGetProgramResourceName(m_programId, GL_UNIFORM, i, m_maxUniformNameSize, nullptr, m_uniformNameBuffer.data());
 
-                    // Debug
-                    spdlog::debug("Uniform {}: {}", i, m_uniformNameBuffer.data());
-                    spdlog::debug("  Name length: {}", uniformResults.nameLength);
-                    spdlog::debug("  Type: {}", uniformResults.type);
-                    spdlog::debug("  Array size: {}", uniformResults.arraySize);
-                    spdlog::debug("  Offset: {}", uniformResults.offset);
-                    spdlog::debug("  Block index: {}", uniformResults.blockIndex);
-                    spdlog::debug("  Array stride: {}", uniformResults.arrayStride);
-                    spdlog::debug("  Matrix stride: {}", uniformResults.matrixStride);
-                    spdlog::debug("  Is row major: {}", uniformResults.isRowMajor);
-                    spdlog::debug("  Atomic counter buffer index: {}", uniformResults.atomicCounterBufferIndex);
-                    spdlog::debug("  Buffer binding: {}", uniformResults.bufferBinding);
-                    spdlog::debug("  Buffer data size: {}", uniformResults.bufferDataSize);
-                    spdlog::debug("  Num active variables: {}", uniformResults.numActiveVariables);
-                    spdlog::debug("  Referenced by vertex shader: {}", uniformResults.referencedByVertexShader);
-                    spdlog::debug("  Referenced by tess control shader: {}", uniformResults.referencedByTessControlShader);
-                    spdlog::debug("  Referenced by tess evaluation shader: {}", uniformResults.referencedByTessEvaluationShader);
-                    spdlog::debug("  Referenced by geometry shader: {}", uniformResults.referencedByGeometryShader);
-                    spdlog::debug("  Referenced by fragment shader: {}", uniformResults.referencedByFragmentShader);
-                    spdlog::debug("  Referenced by compute shader: {}", uniformResults.referencedByComputeShader);
-                    spdlog::debug("  Location: {}", uniformResults.location);
+                    m_uniforms.emplace_back(
+                        m_uniformNameBuffer.data(),
+                        results.location,
+                        OpenGLBaseTypeToShaderBaseType(results.type),
+                        results.arraySize);
                 }
 
-                const GLenum inputProperties[] = {
-                        GL_NAME_LENGTH,
-                        GL_TYPE,
-                        GL_ARRAY_SIZE,
-                        GL_LOCATION,
-                        GL_REFERENCED_BY_VERTEX_SHADER,
-                        GL_REFERENCED_BY_TESS_CONTROL_SHADER,
-                        GL_REFERENCED_BY_TESS_EVALUATION_SHADER,
-                        GL_REFERENCED_BY_GEOMETRY_SHADER,
-                        GL_REFERENCED_BY_FRAGMENT_SHADER,
-                        GL_REFERENCED_BY_COMPUTE_SHADER
-                };
-
-#pragma pack(push, 1)
-                struct InputResults
-                {
-                    GLint nameLength;
-                    GLint type;
-                    GLint arraySize;
-                    GLint location;
-                    GLboolean referencedByVertexShader;
-                    GLboolean referencedByTessControlShader;
-                    GLboolean referencedByTessEvaluationShader;
-                    GLboolean referencedByGeometryShader;
-                    GLboolean referencedByFragmentShader;
-                    GLboolean referencedByComputeShader;
-                } inputResults;
-#pragma pack(pop)
+                std::vector<VertexBufferLayout::Element> elements = layout.GetElements();
 
                 for(int i = 0; i < m_inputCount; i++)
                 {
+                    static const GLenum properties[] = { GL_TYPE, GL_ARRAY_SIZE, GL_LOCATION, };
+#pragma pack(push, 1)
+                    struct { GLint type; GLint arraySize; GLint location; } results;
+#pragma pack(pop)
+
                     glGetProgramResourceiv(
-                            m_programId,
-                            GL_PROGRAM_INPUT,
-                            i,
-                            sizeof(inputProperties) / sizeof(inputProperties[0]),
-                            inputProperties,
-                            sizeof(InputResults) / sizeof(GLint),
-                            nullptr,
-                            (GLint*)&inputResults
+                        m_programId,
+                        GL_PROGRAM_INPUT,
+                        i,
+                        sizeof(properties) / sizeof(properties[0]),
+                        properties,
+                        sizeof(results) / sizeof(GLint),
+                        nullptr,
+                        (GLint*)&results
                     );
 
                     glGetProgramResourceName(m_programId, GL_PROGRAM_INPUT, i, m_maxInputNameSize, nullptr, m_inputNameBuffer.data());
-
-                    // Debug
-                    spdlog::debug("Input {}: {}", i, m_inputNameBuffer.data());
-                    spdlog::debug("  Name length: {}", inputResults.nameLength);
-                    spdlog::debug("  Type: {}", inputResults.type);
-                    spdlog::debug("  Array size: {}", inputResults.arraySize);
-                    spdlog::debug("  Location: {}", inputResults.location);
-                    spdlog::debug("  Referenced by vertex shader: {}", inputResults.referencedByVertexShader);
-                    spdlog::debug("  Referenced by tess control shader: {}", inputResults.referencedByTessControlShader);
-                    spdlog::debug("  Referenced by tess evaluation shader: {}", inputResults.referencedByTessEvaluationShader);
-                    spdlog::debug("  Referenced by geometry shader: {}", inputResults.referencedByGeometryShader);
-                    spdlog::debug("  Referenced by fragment shader: {}", inputResults.referencedByFragmentShader);
-                    spdlog::debug("  Referenced by compute shader: {}", inputResults.referencedByComputeShader);
 
                     bool found = false;
                     for(int j = 0; j < m_inputCount; j++)
                     {
                         if(std::strcmp(m_inputNames[j].data(), m_inputNameBuffer.data()) == 0)
                         {
-                            // TODO: check if element layout is correct
                             auto& element = layout.GetElements()[j];
-                            glEnableVertexAttribArray(inputResults.location);
+
+                            if(element.type != OpenGLBaseTypeToShaderBaseType(results.type))
+                            {
+                                std::stringstream error;
+                                error << "Incorrect buffer layout: " << std::endl;
+                                error << "  Input " << m_inputNameBuffer.data() << " (at location " << results.location << ") has incorrect type" << std::endl;
+                                error << "  Expected " << ShaderBaseTypeToString(OpenGLBaseTypeToShaderBaseType(results.type))
+                                      << " but got " << ShaderBaseTypeToString(element.type) << std::endl;
+                                throw std::runtime_error(error.str());
+                            }
+
+                            glEnableVertexAttribArray(results.location);
                             glVertexAttribPointer(
-                                    inputResults.location,
+                                    results.location,
                                     static_cast<GLint>(element.componentCount),
                                     OpenGL::ShaderBaseTypeToOpenGLBaseType(element.type),
                                     element.normalized ? GL_TRUE : GL_FALSE,
                                     static_cast<GLint>(layout.GetStride()),
                                     reinterpret_cast<void*>(element.offset)
                                     );
+
+                            m_boundAttributeLocations.push_back(results.location);
+                            elements.erase(std::find(elements.begin(), elements.end(), element));
 
                             found = true;
                             break;
@@ -329,14 +234,31 @@ public:
 
                     if(!found)
                     {
-                        throw std::runtime_error("Incorrect vertex buffer layout");
+                        std::stringstream error;
+                        error << "Incorrect buffer layout: " << std::endl;
+                        error << "  Input " << m_inputNameBuffer.data() << " (at location " << results.location << ") not found in layout" << std::endl;
+                        error << "  This input is of type " << OpenGL::ShaderBaseTypeToString(OpenGL::OpenGLBaseTypeToShaderBaseType(results.type)) << " and has " << results.arraySize << " elements" << std::endl;
+                        error << "Please check that the shader input declarations are correct, and they includes all the elements in the layout" << std::endl;
+                        throw std::runtime_error(error.str());
                     }
+                }
+
+                if(!elements.empty())
+                {
+                    std::stringstream error;
+                    error << "Incorrect buffer layout: " << std::endl;
+                    error << "The following elements are not bound to any input:" << std::endl;
+                    for(auto& element : elements)
+                    {
+                        error << "  " << element.name << " (" << OpenGL::ShaderBaseTypeToString(element.type) << ")" << std::endl;
+                    }
+
+                    error << "Please check that the shader input declarations are correct, and they includes all the elements in the layout" << std::endl;
+                    throw std::runtime_error(error.str());
                 }
 
                 m_shouldUpdateBindings = false;
                 m_bound = true;
-
-                glBindVertexArray(0);
             }
 
             if(!m_bound)
@@ -452,7 +374,30 @@ public:
 #ifdef DEBUG
         if(!m_bound)
             throw std::runtime_error("Program not bound.");
+
+        if(!this->m_vertexBuffer)
+            throw std::runtime_error("No vertex buffer set.");
+
+        if(!this->m_indexBuffer)
+            throw std::runtime_error("No index buffer set.");
+
+        for(size_t i = 0; i < m_uniforms.size(); i++)
+        {
+            auto& uniform = m_uniforms[i];
+
+            if(!uniform.isSet)
+            {
+                std::stringstream error;
+                if(uniform.type == ShaderBaseType::ShaderBaseType_Texture)
+                    error << "A texture needs to be set to this pipeline." << std::endl;
+                else
+                    error << "Uniform " << uniform.name << " is not set." << std::endl;
+                throw std::runtime_error(error.str());
+            }
+        }
 #endif
+
+        if(m_texture) m_texture->Bind();
 
         glBindVertexArray(m_vertexArrayId);
 
@@ -462,8 +407,354 @@ public:
                 GL_UNSIGNED_INT,
                 nullptr
                 );
+    }
 
-        glBindVertexArray(0);
+    void SetUniform(const std::string& name, float value) override
+    {
+        Bind();
+
+        auto uniform = FindUniform(name);
+
+        if(!uniform)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " not found." << std::endl;
+            error << "Available uniforms:" << std::endl;
+            for(auto& _uniform : m_uniforms)
+            {
+                error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+            }
+            throw std::runtime_error(error.str());
+        }
+
+        if(uniform->type != ShaderBaseType::ShaderBaseType_Float)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " is not a float." << std::endl;
+            throw std::runtime_error(error.str());
+        }
+
+        glUniform1f(uniform->location, value);
+        uniform->isSet = true;
+    }
+
+    void SetUniform(const std::string& name, const Vector2<float>& value) override
+    {
+        Bind();
+
+        auto uniform = FindUniform(name);
+
+        if(!uniform)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " not found." << std::endl;
+            error << "Available uniforms:" << std::endl;
+            for(auto& _uniform : m_uniforms)
+            {
+                error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+            }
+            throw std::runtime_error(error.str());
+        }
+
+        if(uniform->type != ShaderBaseType::ShaderBaseType_Float2)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " is not a vec2." << std::endl;
+            throw std::runtime_error(error.str());
+        }
+
+        glUniform2f(uniform->location, value.x, value.y);
+        uniform->isSet = true;
+    }
+
+    void SetUniform(const std::string& name, const Vector3<float>& value) override
+    {
+        Bind();
+
+        auto uniform = FindUniform(name);
+
+        if(!uniform)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " not found." << std::endl;
+            error << "Available uniforms:" << std::endl;
+            for(auto& _uniform : m_uniforms)
+            {
+                error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+            }
+            throw std::runtime_error(error.str());
+        }
+
+        if(uniform->type != ShaderBaseType::ShaderBaseType_Float3)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " is not a vec3." << std::endl;
+            throw std::runtime_error(error.str());
+        }
+
+        glUniform3f(uniform->location, value.x, value.y, value.z);
+        uniform->isSet = true;
+    }
+
+    void SetUniform(const std::string& name, const Vector4<float>& value) override
+    {
+        Bind();
+
+        auto uniform = FindUniform(name);
+
+        if(!uniform)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " not found." << std::endl;
+            error << "Available uniforms:" << std::endl;
+            for(auto& _uniform : m_uniforms)
+            {
+                error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+            }
+            throw std::runtime_error(error.str());
+        }
+
+        if(uniform->type != ShaderBaseType::ShaderBaseType_Float4)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " is not a vec4." << std::endl;
+            throw std::runtime_error(error.str());
+        }
+
+        glUniform4f(uniform->location, value.x, value.y, value.z, value.w);
+        uniform->isSet = true;
+    }
+
+    void SetUniform(const std::string& name, const Matrix3<float>& value) override
+    {
+        Bind();
+
+        auto uniform = FindUniform(name);
+
+        if(!uniform)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " not found." << std::endl;
+            error << "Available uniforms:" << std::endl;
+            for(auto& _uniform : m_uniforms)
+            {
+                error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+            }
+            throw std::runtime_error(error.str());
+        }
+
+        if(uniform->type != ShaderBaseType::ShaderBaseType_Mat3)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " is not a mat3." << std::endl;
+            throw std::runtime_error(error.str());
+        }
+
+        glUniformMatrix3fv(uniform->location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(&value.data[0][0]));
+        uniform->isSet = true;
+    }
+
+    void SetUniform(const std::string& name, const Matrix4<float>& value) override
+    {
+        Bind();
+
+        auto uniform = FindUniform(name);
+
+        if(!uniform)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " not found." << std::endl;
+            error << "Available uniforms:" << std::endl;
+            for(auto& _uniform : m_uniforms)
+            {
+                error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+            }
+            throw std::runtime_error(error.str());
+        }
+
+        if(uniform->type != ShaderBaseType::ShaderBaseType_Mat4)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " is not a mat4." << std::endl;
+            throw std::runtime_error(error.str());
+        }
+
+        glUniformMatrix4fv(uniform->location, 1, GL_FALSE, reinterpret_cast<const GLfloat*>(&value.data[0][0]));
+        uniform->isSet = true;
+    }
+
+    void SetUniform(const std::string& name, int value) override
+    {
+        Bind();
+
+        auto uniform = FindUniform(name);
+
+        if(!uniform)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " not found." << std::endl;
+            error << "Available uniforms:" << std::endl;
+            for(auto& _uniform : m_uniforms)
+            {
+                error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+            }
+            throw std::runtime_error(error.str());
+        }
+
+        if(uniform->type != ShaderBaseType::ShaderBaseType_Int)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " is not an int." << std::endl;
+            throw std::runtime_error(error.str());
+        }
+
+        glUniform1i(uniform->location, value);
+        uniform->isSet = true;
+    }
+
+    void SetUniform(const std::string& name, const Vector2<int>& value) override
+    {
+        Bind();
+
+        auto uniform = FindUniform(name);
+
+        if(!uniform)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " not found." << std::endl;
+            error << "Available uniforms:" << std::endl;
+            for(auto& _uniform : m_uniforms)
+            {
+                error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+            }
+            throw std::runtime_error(error.str());
+        }
+
+        if(uniform->type != ShaderBaseType::ShaderBaseType_Int2)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " is not a ivec2." << std::endl;
+            throw std::runtime_error(error.str());
+        }
+
+        glUniform2i(uniform->location, value.x, value.y);
+        uniform->isSet = true;
+    }
+
+    void SetUniform(const std::string& name, const Vector3<int>& value) override
+        {
+            Bind();
+
+            auto uniform = FindUniform(name);
+
+            if(!uniform)
+            {
+                std::stringstream error;
+                error << "Uniform " << name << " not found." << std::endl;
+                error << "Available uniforms:" << std::endl;
+                for(auto& _uniform : m_uniforms)
+                {
+                    error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+                }
+                throw std::runtime_error(error.str());
+            }
+
+            if(uniform->type != ShaderBaseType::ShaderBaseType_Int3)
+            {
+                std::stringstream error;
+                error << "Uniform " << name << " is not a ivec3." << std::endl;
+                throw std::runtime_error(error.str());
+            }
+
+            glUniform3i(uniform->location, value.x, value.y, value.z);
+            uniform->isSet = true;
+        }
+
+    void SetUniform(const std::string& name, const Vector4<int>& value) override
+        {
+            Bind();
+
+            auto uniform = FindUniform(name);
+
+            if(!uniform)
+            {
+                std::stringstream error;
+                error << "Uniform " << name << " not found." << std::endl;
+                error << "Available uniforms:" << std::endl;
+                for(auto& _uniform : m_uniforms)
+                {
+                    error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+                }
+                throw std::runtime_error(error.str());
+            }
+
+            if(uniform->type != ShaderBaseType::ShaderBaseType_Int4)
+            {
+                std::stringstream error;
+                error << "Uniform " << name << " is not a ivec4." << std::endl;
+                throw std::runtime_error(error.str());
+            }
+
+            glUniform4i(uniform->location, value.x, value.y, value.z, value.w);
+            uniform->isSet = true;
+        }
+
+    void SetUniform(const std::string& name, bool value) override
+    {
+        Bind();
+
+        auto uniform = FindUniform(name);
+
+        if(!uniform)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " not found." << std::endl;
+            error << "Available uniforms:" << std::endl;
+            for(auto& _uniform : m_uniforms)
+            {
+                error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+            }
+            throw std::runtime_error(error.str());
+        }
+
+        if(uniform->type != ShaderBaseType::ShaderBaseType_Bool)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " is not a bool." << std::endl;
+            throw std::runtime_error(error.str());
+        }
+
+        glUniform1i(uniform->location, value);
+        uniform->isSet = true;
+    }
+
+    void SetUniform(const std::string& name, const std::shared_ptr<Engine::Texture>& value) override
+    {
+        Bind();
+
+        auto uniform = FindUniform(name);
+
+        if(!uniform)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " not found." << std::endl;
+            error << "Available uniforms:" << std::endl;
+            for(auto& _uniform : m_uniforms)
+            {
+                error << "  " << _uniform.name << "(" << ShaderBaseTypeToString(_uniform.type) << ")" << std::endl;
+            }
+            throw std::runtime_error(error.str());
+        }
+
+        if(uniform->type != ShaderBaseType::ShaderBaseType_Texture)
+        {
+            std::stringstream error;
+            error << "Uniform " << name << " is not a texture." << std::endl;
+            throw std::runtime_error(error.str());
+        }
+
+        m_texture = std::dynamic_pointer_cast<OpenGL::Texture>(value);
+        uniform->isSet = true;
     }
 
 protected:
@@ -478,6 +769,30 @@ protected:
     }
 
 private:
+    struct Uniform
+    {
+        std::string name;
+        GLint location = -1;
+        ShaderBaseType type = ShaderBaseType::ShaderBaseType_Unknown;
+        uint32_t size = 0;
+        bool isSet = false;
+    };
+
+    Uniform* FindUniform(const std::string& name)
+    {
+        auto it = std::find_if(
+                m_uniforms.begin(),
+                m_uniforms.end(),
+                [&name](const Uniform& uniform) { return uniform.name == name; });
+
+        if(it == m_uniforms.end())
+        {
+            return {};
+        }
+
+        return &*it;
+    }
+
     uint32_t m_programId = 0;
     uint32_t m_vertexArrayId = 0;
 
@@ -520,6 +835,8 @@ private:
     //std::vector<std::string> m_shaderStorageBlockNames;
     std::vector<std::string> m_inputNames;
 
+    std::vector<Uniform> m_uniforms;
+    std::shared_ptr<OpenGL::Texture> m_texture;
     std::vector<GLint> m_boundAttributeLocations;
 };
 

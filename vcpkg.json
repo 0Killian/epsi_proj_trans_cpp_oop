@@ -1,0 +1,16 @@
+{
+  "name" : "harvesthaven",
+  "version-string" : "1.0.0",
+  "builtin-baseline" : "eb8e75bb4f5b5f46f65cb10aa863285815c2b69c",
+  "dependencies" : [
+    "stb",
+    {
+      "name": "libx11",
+      "platform": "linux"
+    },
+    {
+      "name": "pthread",
+      "platform": "linux"
+    }
+  ]
+}

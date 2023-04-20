@@ -12,6 +12,8 @@ namespace Engine::OpenGL
 {
 
 GLenum ShaderBaseTypeToOpenGLBaseType(ShaderBaseType type);
+ShaderBaseType OpenGLBaseTypeToShaderBaseType(GLenum type);
+std::string ShaderBaseTypeToString(ShaderBaseType type);
 
 template <IsVertexBufferElement T>
 class VertexBuffer : public Engine::VertexBuffer<T>

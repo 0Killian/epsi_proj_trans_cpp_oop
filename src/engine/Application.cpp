@@ -46,31 +46,46 @@ void Application::RunMainLoop()
             float y = 0;
             float z = 0;
 
+            float u = 0;
+            float v = 0;
+
             Vertex() = default;
-            Vertex(float x, float y, float z) : x(x), y(y), z(z) {}
+            Vertex(float x, float y, float z, float u, float v) : x(x), y(y), z(z), u(u), v(v) {}
 
             [[nodiscard]] static Engine::VertexBufferLayout GetLayout()
             {
                 return {
-                    { "aPos", Engine::ShaderBaseType::ShaderBaseType_Float3 }
+                    { "aPos", Engine::ShaderBaseType::ShaderBaseType_Float3 },
+                    { "aTexCoord", Engine::ShaderBaseType::ShaderBaseType_Float2 }
                 };
             }
         };
 #pragma pack(pop)
 
+        // vertices of a cube
+        // 8 vertices
         std::vector<Vertex> vertices = {
-            { -0.5f, -0.5f, 0.0f },
-            {  0.5f, -0.5f, 0.0f },
-            { -0.5f,  0.5f, 0.0f },
-            {  0.5f,  0.5f, 0.0f }
+            { -0.5f, -0.5f, -0.5f, 0.0f, 0.0f },
+            {  0.5f, -0.5f, -0.5f, 1.0f, 0.0f },
+            { -0.5f,  0.5f, -0.5f, 0.0f, 1.0f },
+            {  0.5f,  0.5f, -0.5f, 1.0f, 1.0f },
+
+            { -0.5f, -0.5f,  0.5f, 0.0f, 0.0f },
+            {  0.5f, -0.5f,  0.5f, 1.0f, 0.0f },
+            { -0.5f,  0.5f,  0.5f, 0.0f, 1.0f },
+            {  0.5f,  0.5f,  0.5f, 1.0f, 1.0f }
         };
 
         auto vertexBuffer = Engine::CreateVertexBuffer<Vertex>(m_renderer, Engine::VertexBufferUsage::VertexBufferUsage_Static);
         vertexBuffer->SetData(vertices.data(), vertices.size());
 
         std::vector<uint32_t> indices = {
-            0, 1, 2,
-            1, 2, 3
+            0, 1, 2, 2, 1, 3,
+            1, 5, 3, 3, 5, 7,
+            5, 4, 7, 7, 4, 6,
+            4, 0, 6, 6, 0, 2,
+            2, 3, 6, 6, 3, 7,
+            4, 5, 0, 0, 5, 1
         };
 
         auto indexBuffer = Engine::CreateIndexBuffer(m_renderer, Engine::IndexBufferUsage::IndexBufferUsage_Static);
@@ -88,15 +103,41 @@ void Application::RunMainLoop()
 
         pipeline->Bind();
 
+        std::shared_ptr<Engine::Texture> texture = Engine::CreateTexture(m_renderer);
+        texture->LoadFromFile("assets/textures/main_menu.png");
+
+        Engine::Vector3<float> objectPosition = {0, 0.0f, 2.0f };
+
+        Engine::Vector3<float> cameraPosition = { 0.0f, 0.0f, -5.0f };
+        Engine::Vector3<float> cameraTarget = objectPosition;
+
+        Engine::Matrix4<float> model = Engine::Matrix4<float>::Translation(objectPosition) * Engine::Matrix4<float>::Rotation({0, 0, 45.0f});
+        Engine::Matrix4<float> view = Engine::Matrix4<float>::LookAt(cameraPosition, cameraTarget, { 0.0f, 1.0f, 0.0f });
+        Engine::Matrix4<float> projection = Engine::Matrix4<float>::PerspectiveProjection(
+                45.0f,
+                static_cast<float>(DEFAULT_WINDOW_WIDTH) / static_cast<float>(DEFAULT_WINDOW_HEIGHT),
+                0.1f,
+                1000.0f);
+
+        Engine::Matrix4<float> mvp = projection * view * model;
+
+        std::shared_ptr<Engine::Texture> texture2 = Engine::CreateTexture(m_renderer);
+        texture2->LoadFromFile("assets/textures/player.png");
+
+        pipeline->SetUniform("uTexture", texture);
+        pipeline->SetUniform("uniforms.MVP", mvp);
+
+        float time = 0;
+
         // Initialize the thread pool
-        m_threadPool.Init();
+        //m_threadPool.Init();
 
         // Restart the clocks so that the first frame's delta time
         // is the lowest possible
         m_clock.restart();
 
-        m_currentScene = std::make_unique<MainMenuScene>();
-        m_currentScene->Init();
+        //m_currentScene = std::make_unique<MainMenuScene>();
+        //m_currentScene->Init();
 
         // Main loop
         while(m_running)
@@ -113,8 +154,50 @@ void Application::RunMainLoop()
                 frames = 0;
             }
 
+            pipeline->SetUniform("uTexture", texture);
             m_renderer->Clear(Engine::Color::Green());
+
+            time += delta_time;
+            float xpos = std::cos(time * 2.0f) * 5.0f;
+            float ypos = std::sin(time * 2.0f) * 5.0f;
+            float zpos = std::cos(time * 2.0f) * 5.0f;
+
+            float yrot = std::sin(time * 0.60f) * 180.0f;
+            float xrot = std::cos(time * 1.0f) * 180.0f;
+            float zrot = std::cos(time * 0.75f) * 180.0f;
+
+            view = Engine::Matrix4<float>::LookAt({xpos, ypos, zpos}, objectPosition, { 0.0f, 1.0f, 0.0f });
+
+            model = Engine::Matrix4<float>::Translation(objectPosition) * Engine::Matrix4<float>::Rotation({xrot, yrot, 45.0f + zrot});
+            Engine::Matrix4<float> mvp = projection * view * model;
+            pipeline->SetUniform("uTexture", texture);
+            pipeline->SetUniform("uniforms.MVP", mvp);
             pipeline->Render();
+
+            model = Engine::Matrix4<float>::Translation({-1.5f, -1.5f, 0.0f}) * Engine::Matrix4<float>::Rotation({45 + xrot, zrot, yrot}) * Engine::Matrix4<float>::Scale({0.75f, 0.75f, 0.75f});
+            mvp = projection * view * model;
+            pipeline->SetUniform("uTexture", texture);
+            pipeline->SetUniform("uniforms.MVP", mvp);
+            pipeline->Render();
+
+            model = Engine::Matrix4<float>::Translation({1.5f, -1.5f, 0.0f}) * Engine::Matrix4<float>::Rotation({zrot, 45 + xrot, yrot}) * Engine::Matrix4<float>::Scale({0.75f, 0.75f, 0.75f});
+            mvp = projection * view * model;
+            pipeline->SetUniform("uTexture", texture);
+            pipeline->SetUniform("uniforms.MVP", mvp);
+            pipeline->Render();
+
+            model = Engine::Matrix4<float>::Translation({-1.5f, 1.5f, 0.0f}) * Engine::Matrix4<float>::Rotation({yrot, zrot, 45 + xrot}) * Engine::Matrix4<float>::Scale({0.75f, 0.75f, 0.75f});
+            mvp = projection * view * model;
+            pipeline->SetUniform("uniforms.MVP", mvp);
+            pipeline->SetUniform("uTexture", texture2);
+            pipeline->Render();
+
+            model = Engine::Matrix4<float>::Translation({1.5f, 1.5f, 0.0f}) * Engine::Matrix4<float>::Rotation({45 + yrot, xrot, zrot}) * Engine::Matrix4<float>::Scale({0.75f, 0.75f, 0.75f});
+            mvp = projection * view * model;
+            pipeline->SetUniform("uTexture", texture);
+            pipeline->SetUniform("uniforms.MVP", mvp);
+            pipeline->Render();
+
             m_renderer->SwapBuffers();
 
             // Update and render the frame

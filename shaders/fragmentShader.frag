@@ -1,9 +1,13 @@
 #version 450 core
 
-layout (location = 1) in vec3 ourColor;
+layout (binding = 0) uniform sampler2D uTexture;
 
-layout (location = 2) out vec4 fragColor;
+layout (push_constant, std430) uniform PushConstants { mat4 MVP; } uniforms;
+
+layout (location = 0) out vec4 fragOutputColor;
+layout (location = 2) in vec2 vTexCoord;
 
 void main() {
-    fragColor = vec4(ourColor, 1.0f);
+    vec4 texel = texture(uTexture, vTexCoord);
+    fragOutputColor = texel;
 }

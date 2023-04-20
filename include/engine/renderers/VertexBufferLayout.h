@@ -19,7 +19,9 @@ enum class ShaderBaseType : uint8_t
     ShaderBaseType_Int2,
     ShaderBaseType_Int3,
     ShaderBaseType_Int4,
-    ShaderBaseType_Bool
+    ShaderBaseType_Bool,
+    ShaderBaseType_Texture,
+    ShaderBaseType_Unknown
 };
 
 class VertexBufferLayout
@@ -80,7 +82,11 @@ public:
             offset(0),
             name(std::move(name)),
             componentCount(GetTypeComponentCount(type))
+        {}
+
+        bool operator==(const Element& other) const
         {
+            return name == other.name && type == other.type && normalized == other.normalized && offset == other.offset && componentCount == other.componentCount;
         }
     };
 

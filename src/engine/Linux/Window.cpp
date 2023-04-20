@@ -108,7 +108,10 @@ void Window::SetVSync(bool vsync)
 [[nodiscard]] Vector2<uint32_t> Window::GetSize() const
 {
     if(m_fullscreen)
-        return {DefaultScreenOfDisplay(m_display)->width, DefaultScreenOfDisplay(m_display)->height};
+        return {
+            static_cast<uint32_t>(DefaultScreenOfDisplay(m_display)->width),
+            static_cast<uint32_t>(DefaultScreenOfDisplay(m_display)->height)
+        };
 
     return m_size;
 }
